@@ -1,31 +1,44 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using WinBridge.App.Views;
+using System;
+using System.Linq;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+namespace WinBridge.App;
 
-namespace WinBridge.App
+public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainWindow : Window
+    public MainWindow()
     {
-        public MainWindow()
+        this.InitializeComponent();
+        this.Title = "WinBridge";
+
+        // S'abonner à l'événement de changement de menu
+        NavView.SelectionChanged += NavView_SelectionChanged;
+
+        // Charger la page par défaut (Dashboard ou Servers)
+        ContentFrame.Navigate(typeof(AddServerPage));
+    }
+
+    private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        if (args.IsSettingsSelected)
         {
-            InitializeComponent();
+            return;
+        }
+
+        var selectedItem = args.SelectedItemContainer as NavigationViewItem;
+
+        if (selectedItem != null)
+        {
+            string tag = selectedItem.Tag.ToString();
+
+            // Selon le "Tag" défini dans le XAML, on change de page
+            switch (tag)
+            {
+                case "Servers":
+                    ContentFrame.Navigate(typeof(AddServerPage));
+                    break;
+            }
         }
     }
 }
