@@ -9,7 +9,7 @@ namespace WinBridge.App.Services
 {
     public class ModuleManager
     {
-        public IWinBridgeModule? LoadModule(string path)
+        public (IWinBridgeModule Module, AssemblyLoadContext Context)? LoadModule(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
@@ -39,12 +39,18 @@ namespace WinBridge.App.Services
 
                 // Create instance
                 var module = Activator.CreateInstance(moduleType) as IWinBridgeModule;
-                return module;
+                if (module != null)
+                {
+                    return (module, context);
+                }
+                
+                context.Unload();
+                return null;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading module from {path}: {ex.Message}");
-                return null;
+                throw; // Re-throw to let the caller handle logging
             }
         }
     }

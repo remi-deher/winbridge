@@ -11,24 +11,50 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="150"/>
         </Grid.RowDefinitions>
 
         <TextBlock Text="Mode Développeur - Side-loading" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,20">
             <Button x:Name="LoadButton" Content="Charger Module (.dll)" Click="LoadButton_Click"/>
+            <Button x:Name="UnloadButton" Content="Décharger le module" Click="UnloadButton_Click" IsEnabled="False"/>
             <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <Border Grid.Row="2" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Padding="10" CornerRadius="4">
+        <Border Grid.Row="2" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Padding="10" CornerRadius="4" Margin="0,0,0,20">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock x:Name="ModuleInfoTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,10"/>
-                <ContentControl x:Name="ModuleContent" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                
+                <TextBlock x:Name="ModuleInfoTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,10" Grid.ColumnSpan="2"/>
+                
+                <!-- Main Module Content -->
+                <ContentControl x:Name="ModuleContent" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Margin="0,0,10,0"/>
+
+                <!-- Properties Inspector -->
+                <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="PropertiesPanel" Spacing="5">
+                        <TextBlock Text="Inspecteur de Propriétés" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,5"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
+
+        <!-- Console -->
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Console de Sortie" Style="{StaticResource CaptionTextBlockStyle}" Margin="0,0,0,5"/>
+            <TextBox x:Name="DebugConsole" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" FontFamily="Consolas" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        </Grid>
     </Grid>
 </Page>
