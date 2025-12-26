@@ -5,6 +5,7 @@ using System.Linq;
 using WinBridge.Models.Entities;
 using WinBridge.Models.Enums;
 using WinBridge.Core.Data;
+using System.Collections.Generic;
 
 namespace WinBridge.App.Views
 {
@@ -16,6 +17,7 @@ namespace WinBridge.App.Views
         {
             this.InitializeComponent();
             LoadKeys();
+            LoadGroups();
 
             if (existing != null)
             {
@@ -25,7 +27,13 @@ namespace WinBridge.App.Views
                 SshPortBox.Value = existing.SshPort > 0 ? existing.SshPort : 22;
                 UserBox.Text = existing.Username;
                 PassBox.Password = existing.Password;
+                TagsBox.Text = existing.Tags;
                 
+                if (existing.ServerGroupId.HasValue)
+                {
+                    GroupCombo.SelectedValue = existing.ServerGroupId;
+                }
+
                 // Select OS Category
                 foreach (ComboBoxItem item in OsCategoryCombo.Items)
                 {
@@ -68,6 +76,13 @@ namespace WinBridge.App.Views
             using var db = new AppDbContext();
             KeyCombo.ItemsSource = db.Keys.ToList();
             KeyCombo.SelectedValuePath = "Id";
+        }
+
+        private void LoadGroups()
+        {
+            using var db = new AppDbContext();
+            GroupCombo.ItemsSource = db.ServerGroups.ToList();
+            GroupCombo.SelectedValuePath = "Id";
         }
 
         private void OsCategoryCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -113,6 +128,33 @@ namespace WinBridge.App.Views
             }
         }
 
+        private async void BtnConfirmAddGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (NewGroupBox == null || string.IsNullOrWhiteSpace(NewGroupBox.Text)) return;
+
+            string groupName = NewGroupBox.Text.Trim();
+
+            try
+            {
+                using var db = new AppDbContext();
+                var newGroup = new ServerGroup { Name = groupName };
+                db.ServerGroups.Add(newGroup);
+                await db.SaveChangesAsync();
+
+                LoadGroups();
+                GroupCombo.SelectedValue = newGroup.Id;
+                
+                NewGroupBox.Text = "";
+                NewGroupFlyout?.Hide();
+            }
+            catch (Exception ex)
+            {
+                 // Log or showing error might be tricky inside a Dialog without causing issues, 
+                 // but we can set the text to error or ignore.
+                 // For now, let's just proceed.
+            }
+        }
+
         private void ServerEditDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             // Validation
@@ -128,6 +170,8 @@ namespace WinBridge.App.Views
             Result.SshPort = (int)SshPortBox.Value;
             Result.Username = UserBox.Text;
             Result.Password = PassBox.Password;
+            Result.Tags = TagsBox.Text ?? "";
+            Result.ServerGroupId = (Guid?)GroupCombo.SelectedValue;
             
             if (OsCategoryCombo.SelectedItem is ComboBoxItem item && Enum.TryParse<OSCategory>(item.Tag?.ToString(), out var os))
             {

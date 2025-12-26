@@ -25,7 +25,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         // Gérer le clic sur le bouton Paramètres (en bas)
         if (args.IsSettingsSelected)
         {
-            // ContentFrame.Navigate(typeof(SettingsPage)); // À créer plus tard si besoin
+            ContentFrame.Navigate(typeof(SettingsPage));
             return;
         }
 

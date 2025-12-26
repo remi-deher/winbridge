@@ -31,7 +31,37 @@
         <!-- 2. Essential Info -->
         <TextBox x:Name="NameBox" Grid.Row="1" Header="Nom du serveur" Margin="0,0,0,12"/>
         
+        <!-- 3. Group & Tags (New) -->
         <Grid Grid.Row="2" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <Grid Margin="0,0,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="GroupCombo" Header="Groupe" HorizontalAlignment="Stretch" DisplayMemberPath="Name" Margin="0,0,8,0"/>
+                <Button x:Name="BtnAddGroup" Grid.Column="1" Content="+" VerticalAlignment="Bottom" Margin="0,0,0,5" ToolTipService.ToolTip="Créer un groupe">
+                    <Button.Flyout>
+                        <Flyout x:Name="NewGroupFlyout">
+                            <StackPanel Spacing="12" MinWidth="250">
+                                <TextBlock Text="Nouveau Groupe" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                <TextBox x:Name="NewGroupBox" Header="Nom" PlaceholderText="ex: Production"/>
+                                <Button Content="Ajouter" Click="BtnConfirmAddGroup_Click" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch"/>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+
+            <TextBox x:Name="TagsBox" Grid.Column="1" Header="Tags" PlaceholderText="ex: prod, db" />
+        </Grid>
+
+        <!-- 4. Network -->
+        <Grid Grid.Row="3" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -40,8 +70,8 @@
             <NumberBox x:Name="SshPortBox" Grid.Column="1" Header="Port SSH" Value="22" SpinButtonPlacementMode="Compact" MinWidth="80"/>
         </Grid>
 
-        <!-- 3. Auth -->
-        <Grid Grid.Row="3" Margin="0,0,0,12">
+        <!-- 5. Auth -->
+        <Grid Grid.Row="4" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -50,8 +80,8 @@
             <PasswordBox x:Name="PassBox" Grid.Column="1" Header="Mot de passe"/>
         </Grid>
         
-        <!-- 4. Windows Specifics -->
-        <StackPanel x:Name="WindowsSettingsPanel" Grid.Row="4" Visibility="Collapsed" 
+        <!-- 6. Windows Specifics -->
+        <StackPanel x:Name="WindowsSettingsPanel" Grid.Row="5" Visibility="Collapsed" 
                     Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="12" CornerRadius="4" Margin="0,0,0,12">
             <TextBlock Text="Options Windows &amp; Hybrides" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,12"/>
             
@@ -75,7 +105,7 @@
                      Title="Info WinRM" Message="WinRM nécessite 'winrm quickconfig' sur la cible." />
         </StackPanel>
 
-        <!-- 5. Keys -->
-        <ComboBox x:Name="KeyCombo" Grid.Row="5" Header="Clé SSH (Optionnel)" HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
+        <!-- 7. Keys -->
+        <ComboBox x:Name="KeyCombo" Grid.Row="6" Header="Clé SSH (Optionnel)" HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
     </Grid>
 </ContentDialog>

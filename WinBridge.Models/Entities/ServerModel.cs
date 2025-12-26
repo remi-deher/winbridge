@@ -14,6 +14,9 @@ public class ServerModel
     [Required]
     public string Host { get; set; } = string.Empty;
 
+    public Guid? ServerGroupId { get; set; }
+    public string Tags { get; set; } = string.Empty;
+
     public int SshPort { get; set; } = 22;
 
     // Backward compatibility property mapping to SshPort

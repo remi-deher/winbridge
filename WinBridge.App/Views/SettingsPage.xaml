@@ -1,0 +1,58 @@
+<Page
+    x:Class="WinBridge.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <StackPanel Spacing="24" MaxWidth="600" HorizontalAlignment="Left">
+            <TextBlock Text="Sauvegarde et Restauration" Style="{StaticResource TitleTextBlockStyle}"/>
+
+            <!-- Export Section -->
+            <StackPanel Spacing="12" Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16" CornerRadius="8">
+                <TextBlock Text="Exporter" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                
+                <CheckBox x:Name="ChkExportAll" Content="Tout exporter (Tous les serveurs)" IsChecked="True" Checked="ChkExportAll_Changed" Unchecked="ChkExportAll_Changed"/>
+
+                <StackPanel x:Name="FilterPanel" Visibility="Collapsed" Spacing="8" Margin="24,0,0,0">
+                   <TextBlock Text="Sélection personnalisée :" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                   
+                   <Expander Header="Groupes" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                       <ListView x:Name="ListGroups" SelectionMode="Multiple" Height="150" DisplayMemberPath="Name"/>
+                   </Expander>
+
+                   <Expander Header="Tags" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                       <ListView x:Name="ListTags" SelectionMode="Multiple" Height="100"/>
+                   </Expander>
+
+                   <Expander Header="Serveurs Spécifiques" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                       <ListView x:Name="ListServers" SelectionMode="Multiple" Height="200" DisplayMemberPath="Name"/>
+                   </Expander>
+                </StackPanel>
+
+                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                
+                <TextBlock Text="Options de contenu :"/>
+                <CheckBox x:Name="ChkExtensions" Content="Modules et Extensions" IsChecked="True"/>
+                <CheckBox x:Name="ChkKeys" Content="Clés SSH" IsChecked="False" Checked="Sens_Checked" Unchecked="Sens_Unchecked"/>
+                <CheckBox x:Name="ChkSensitive" Content="Mots de passe" IsChecked="False" Checked="Sens_Checked" Unchecked="Sens_Unchecked"/>
+                
+                <PasswordBox x:Name="TxtExportPass" Header="Mot de passe de chiffrement (Requis pour Clés/Mots de passe)"/>
+                
+                <Button x:Name="BtnExport" Content="Exporter vers un fichier" Style="{StaticResource AccentButtonStyle}" Click="BtnExport_Click"/>
+            </StackPanel>
+
+            <!-- Import Section -->
+            <StackPanel Spacing="12" Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16" CornerRadius="8">
+                <TextBlock Text="Importer" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                
+                <PasswordBox x:Name="TxtImportPass" Header="Mot de passe de déchiffrement (si nécessaire)"/>
+                <Button x:Name="BtnImport" Content="Sélectionner un fichier de sauvegarde..." Click="BtnImport_Click"/>
+                
+                <TextBlock x:Name="TxtImportStatus" Style="{StaticResource BodyTextBlockStyle}" Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>
