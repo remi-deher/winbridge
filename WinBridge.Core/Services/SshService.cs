@@ -8,12 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using WinBridge.Models.Entities;
 
-namespace WinBridge.Core.Services;
-
+using WinBridge.Models.Enums;
 using WinBridge.SDK;
 
-public class SshService : ISshService, IDisposable
+namespace WinBridge.Core.Services;
+
+public class SshService : ISshService, IRemoteService, IDisposable
 {
+    public RemoteType Protocol => RemoteType.SSH;
     private SshClient? _client;
     private ShellStream? _stream;
     private bool _isDisposed;

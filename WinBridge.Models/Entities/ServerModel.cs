@@ -24,6 +24,10 @@ public class ServerModel
     public bool UseSshAgent { get; set; }
     public bool UsePrivateKey { get; set; }
     public Guid? SshKeyId { get; set; }
+    
+    // Config
+    public bool UseWinRM { get; set; }
+    public WinBridge.Models.Enums.ServerOsType OperatingSystem { get; set; } = WinBridge.Models.Enums.ServerOsType.Unknown;
 
     // --- CACHE ---
     public string? CachedOsInfo { get; set; }

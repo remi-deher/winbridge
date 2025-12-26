@@ -15,7 +15,7 @@ namespace WinBridge.App.Views
     public sealed partial class TerminalPage : Page
     {
         private ServerModel? _server;
-        private SshService? _sshService;
+        private IRemoteService? _remoteService;
         private readonly ModuleManager _moduleManager;
 
         public TerminalPage()
@@ -54,24 +54,34 @@ namespace WinBridge.App.Views
             {
                 _server = server;
                 
-                // 1. Start SSH Connection
-                _sshService = new SshService();
+                // Factory Logic
+                if (_server.OperatingSystem == Models.Enums.ServerOsType.Windows && _server.UseWinRM)
+                {
+                    _remoteService = new WinRmService();
+                }
+                else
+                {
+                    _remoteService = new SshService();
+                }
                 
                 try 
                 {
                     LoadingRing.IsActive = true;
                     LoadingRing.Visibility = Visibility.Visible;
 
-                    // Run connection in background
-                    await Task.Run(() => _sshService.Connect(server));
+                    // Connection Polymorphism
+                    await Task.Run(() => 
+                    {
+                        if (_remoteService is SshService ssh) ssh.Connect(server);
+                        else if (_remoteService is WinRmService winrm) winrm.Connect(server);
+                    });
                     
                     LoadingRing.IsActive = false;
                     LoadingRing.Visibility = Visibility.Collapsed;
                     
-                    _sshService.StartTerminal();
+                    if (_remoteService is SshService sshStarted) sshStarted.StartTerminal();
 
-                    // 2. Load Modules for this server AFTER connection is established
-                    // This allows passing the connected SshService to the modules
+                    // Load Modules
                     LoadModulesForServer(server.Id);
                 }
                 catch (Exception ex)
@@ -95,7 +105,6 @@ namespace WinBridge.App.Views
         {
             ModulesPanel.Children.Clear();
 
-            // 1. Get List of enabled modules from DB
             var enabledModules = ModulesManagementPage.GetEnabledModulesForServer(serverId);
 
             if (!enabledModules.Any())
@@ -109,7 +118,6 @@ namespace WinBridge.App.Views
                 return;
             }
 
-            // 2. Load and Instantiate each module
             foreach (var extSource in enabledModules)
             {
                 if (string.IsNullOrEmpty(extSource.LocalPath)) continue;
@@ -119,12 +127,16 @@ namespace WinBridge.App.Views
                 {
                     var module = result.Value.Module;
                     
-                    // Initialize module with context
-                    // We create a service provider that exposes the CURRENT SSH Service
+                    // Inject Global Context
+                    module.CurrentServer = _server;
+
+                    // Inject Services
                     var services = new ServiceCollection();
-                    if (_sshService != null)
+                    if (_remoteService != null)
                     {
-                        services.AddSingleton<ISshService>(_sshService);
+                        services.AddSingleton<IRemoteService>(_remoteService);
+                        // Also register specific types just in case
+                        if (_remoteService is SshService ssh) services.AddSingleton<ISshService>(ssh);
                     }
                     
                     var provider = services.BuildServiceProvider();
@@ -140,7 +152,6 @@ namespace WinBridge.App.Views
                         continue;
                     }
 
-                    // Create UI Container for the module
                     var expander = new Expander
                     {
                         Header = module.Name,
@@ -159,7 +170,7 @@ namespace WinBridge.App.Views
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
              base.OnNavigatingFrom(e);
-             _sshService?.Dispose();
+             (_remoteService as IDisposable)?.Dispose();
         }
     }
 }

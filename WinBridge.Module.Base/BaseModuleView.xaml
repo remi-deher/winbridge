@@ -1,0 +1,39 @@
+<UserControl
+    x:Class="WinBridge.Module.Base.BaseModuleView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="10" Padding="10">
+        <TextBlock Text="Informations Système" Style="{StaticResource SubtitleTextBlockStyle}"/>
+        
+        <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Services / Uptime -->
+            <Border BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Services / Uptime" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="ServiceStatusText" Text="Chargement..." TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Button x:Name="CleanLogsButton" Content="Nettoyer Logs" Margin="0,10,0,0" Click="CleanLogsButton_Click"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Disk Usage -->
+            <Border Grid.Column="1" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Espace Disque" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="DiskUsageText" Text="Chargement..." TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Button x:Name="RefreshButton" Content="Actualiser" Margin="0,10,0,0" Click="RefreshButton_Click"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <TextBox x:Name="OutputLog" IsReadOnly="True" Height="100" AcceptsReturn="True" Header="Logs d'exécution"/>
+    </StackPanel>
+</UserControl>
