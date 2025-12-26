@@ -1,0 +1,76 @@
+<Page
+    x:Class="WinBridge.App.Views.ServerDashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:components="using:WinBridge.App.Components"
+    mc:Ignorable="d"
+    NavigationCacheMode="Disabled">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" x:Name="ColCenter"/>
+            <ColumnDefinition Width="400" x:Name="ColRight"/>
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" Padding="24">
+            <StackPanel Spacing="24">
+                <StackPanel>
+                    <TextBlock x:Name="TxtServerName" Text="Chargement..." Style="{StaticResource TitleTextBlockStyle}"/>
+                    <TextBlock x:Name="TxtServerHost" Text="..." Style="{StaticResource SubtitleTextBlockStyle}" Opacity="0.6"/>
+                </StackPanel>
+
+                <GridView SelectionMode="None">
+                    <GridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="0,0,16,16"/>
+                        </Style>
+                    </GridView.ItemContainerStyle>
+
+                    <Grid Width="200" Height="150" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                            <FontIcon Glyph="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="32"/>
+                            <TextBlock Text="Système" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Width="200" Height="150" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                            <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="32"/>
+                            <TextBlock Text="Docker" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+                </GridView>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Column="1" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="300" x:Name="RowTerminal"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <components:TerminalControl x:Name="MyTerminal" Grid.Row="0" ToggleFullScreen="MyTerminal_ToggleFullScreen"/>
+
+            <StackPanel Grid.Row="1" Padding="24" Spacing="20">
+                <TextBlock Text="Informations" Style="{StaticResource SubtitleTextBlockStyle}"/>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Système d'exploitation" Opacity="0.6"/>
+                    <TextBlock x:Name="lblOs" Text="..." FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Temps d'activité (Uptime)" Opacity="0.6"/>
+                    <TextBlock x:Name="lblUptime" Text="..." FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Espace Disque" Opacity="0.6"/>
+                    <TextBlock x:Name="lblDisk" Text="..." FontWeight="SemiBold"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

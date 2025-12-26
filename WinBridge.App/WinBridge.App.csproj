@@ -14,6 +14,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Components\TerminalControl.xaml" />
     <None Remove="Views\DashboardPage.xaml" />
     <None Remove="Views\TerminalPage.xaml" />
   </ItemGroup>
@@ -49,6 +50,11 @@
     <ProjectReference Include="..\WinBridge.Models\WinBridge.Models.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Views\ServerDashboardPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="Views\DashboardPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -70,6 +76,11 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\ServerListPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Components\TerminalControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
