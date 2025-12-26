@@ -54,34 +54,33 @@ namespace WinBridge.App.Views
             {
                 _server = server;
                 
-                // Factory Logic
-                if (_server.OperatingSystem == Models.Enums.ServerOsType.Windows && _server.UseWinRM)
-                {
-                    _remoteService = new WinRmService();
-                }
-                else
-                {
-                    _remoteService = new SshService();
-                }
+                var factory = App.Services?.GetRequiredService<Core.Services.RemoteServiceFactory>();
                 
                 try 
                 {
                     LoadingRing.IsActive = true;
                     LoadingRing.Visibility = Visibility.Visible;
 
-                    // Connection Polymorphism
-                    await Task.Run(() => 
+                    if (factory != null)
                     {
-                        if (_remoteService is SshService ssh) ssh.Connect(server);
-                        else if (_remoteService is WinRmService winrm) winrm.Connect(server);
-                    });
+                        // Factory now handles Connection + Fallback
+                        _remoteService = await factory.ConnectAsync(_server);
+                    }
+                    else
+                    {
+                         // Emergency Fallback (should not happen)
+                         _remoteService = new SshService();
+                         ((SshService)_remoteService).Connect(server);
+                    }
                     
                     LoadingRing.IsActive = false;
                     LoadingRing.Visibility = Visibility.Collapsed;
                     
+                    // Show current protocol
+                    System.Diagnostics.Debug.WriteLine($"Connected using: {_remoteService.Protocol}");
+
                     if (_remoteService is SshService sshStarted) sshStarted.StartTerminal();
 
-                    // Load Modules
                     LoadModulesForServer(server.Id);
                 }
                 catch (Exception ex)

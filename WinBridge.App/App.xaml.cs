@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
@@ -27,6 +29,7 @@ namespace WinBridge.App
     public partial class App : Application
     {
         public Window? Window { get; private set; }
+        public static IServiceProvider? Services { get; private set; }
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -35,10 +38,23 @@ namespace WinBridge.App
         public App()
         {
             InitializeComponent();
+            
+            ConfigureServices();
 
             // Créer la base de données si elle n'existe pas
             using var db = new WinBridge.Core.Data.AppDbContext();
             db.Database.EnsureCreated();
+        }
+
+        private void ConfigureServices()
+        {
+            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            
+            services.AddTransient<WinBridge.Core.Services.SshService>();
+            services.AddTransient<WinBridge.Core.Services.WinRmService>();
+            services.AddSingleton<WinBridge.Core.Services.RemoteServiceFactory>();
+
+            Services = services.BuildServiceProvider();
         }
 
         /// <summary>
