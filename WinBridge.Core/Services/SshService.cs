@@ -100,7 +100,7 @@ public class SshService : IDisposable
 
         // Création du stream terminal (xterm)
         // 80 colonnes, 24 lignes (sera redimensionné par xterm.js si géré, sinon valeur par défaut)
-        _stream = _client.CreateShellStream("xterm", 80, 24, 800, 600, 1024);
+        _stream = _client.CreateShellStream("xterm-256color", 80, 24, 800, 600, 1024);
 
         // Boucle de lecture asynchrone
         Task.Run(async () =>
