@@ -8,19 +8,44 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid Padding="20">
-        <GridView x:Name="ServerGrid" SelectionMode="None">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Padding="24" Orientation="Horizontal" Spacing="20">
+            <TextBlock Text="Mes Serveurs" Style="{StaticResource TitleTextBlockStyle}"/>
+
+            <Button Style="{StaticResource AccentButtonStyle}" Click="BtnAddServer_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <SymbolIcon Symbol="Add"/>
+                    <TextBlock Text="Nouveau Serveur"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <GridView x:Name="ServerGrid" Grid.Row="1" Padding="24" SelectionMode="None">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="models:ServerModel">
-                    <StackPanel Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" 
-                                Padding="15" CornerRadius="8" Margin="10" Width="200" Spacing="5">
-                        <SymbolIcon Symbol="FourBars" HorizontalAlignment="Left" Foreground="{ThemeResource SystemAccentColor}"/>
-                        <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontSize="16"/>
-                        <TextBlock Text="{x:Bind Host}" Opacity="0.7"/>
-                        <Button Content="Connecter" HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="BtnConnect_Click"/>
+                    <StackPanel Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
+                                Padding="16" CornerRadius="8" Margin="0,0,16,16" Width="240" Spacing="8">
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{ThemeResource SystemAccentColor}"/>
+                            <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontSize="16"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{x:Bind Host}" Opacity="0.6" Style="{StaticResource CaptionTextBlockStyle}"/>
+                        <TextBlock Text="{x:Bind Username}" Opacity="0.6" Style="{StaticResource CaptionTextBlockStyle}"/>
+
+                        <Button Content="Connecter" HorizontalAlignment="Stretch" Margin="0,8,0,0" Click="BtnConnect_Click"/>
                     </StackPanel>
                 </DataTemplate>
             </GridView.ItemTemplate>
         </GridView>
+
+        <TextBlock x:Name="TxtEmpty" Grid.Row="1" Text="Aucun serveur. Ajoutez-en un !" 
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.5" Visibility="Collapsed"/>
     </Grid>
 </Page>

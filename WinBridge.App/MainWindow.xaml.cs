@@ -12,33 +12,43 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         this.InitializeComponent();
         this.Title = "WinBridge";
 
-        // S'abonner à l'événement de changement de menu
+        // Gestion de la navigation
         NavView.SelectionChanged += NavView_SelectionChanged;
 
-        // Charger la page par défaut (Dashboard ou Servers)
-        ContentFrame.Navigate(typeof(AddServerPage));
+        // Au démarrage, on sélectionne le premier item (Dashboard) et on navigue
+        NavView.SelectedItem = NavView.MenuItems[0];
+        ContentFrame.Navigate(typeof(DashboardPage));
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
+        // Gérer le clic sur le bouton Paramètres (en bas)
         if (args.IsSettingsSelected)
         {
+            // ContentFrame.Navigate(typeof(SettingsPage)); // À créer plus tard si besoin
             return;
         }
 
+        // Vérifier qu'un item est bien sélectionné
         var selectedItem = args.SelectedItemContainer as NavigationViewItem;
+        if (selectedItem?.Tag == null) return;
 
-        if (selectedItem != null)
+        string tag = selectedItem.Tag.ToString();
+
+        // Navigation principale
+        switch (tag)
         {
-            string tag = selectedItem.Tag.ToString();
+            case "Dashboard":
+                ContentFrame.Navigate(typeof(DashboardPage));
+                break;
 
-            // Selon le "Tag" défini dans le XAML, on change de page
-            switch (tag)
-            {
-                case "Servers":
-                    ContentFrame.Navigate(typeof(ServerListPage));
-                    break;
-            }
+            case "Servers":
+                ContentFrame.Navigate(typeof(ServerListPage));
+                break;
+
+            case "Keys":
+                ContentFrame.Navigate(typeof(KeysPage));
+                break;
         }
     }
 }
