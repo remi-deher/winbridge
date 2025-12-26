@@ -12,7 +12,7 @@ public sealed partial class AddServerPage : Page
         this.InitializeComponent();
     }
 
-    private void BtnSave_Click(object sender, RoutedEventArgs e)
+    private async void BtnSave_Click(object sender, RoutedEventArgs e)
     {
         var newServer = new ServerModel
         {
@@ -23,8 +23,21 @@ public sealed partial class AddServerPage : Page
             Password = TxtPassword.Password
         };
 
-        // Remplacement de ShowMessage par un ContentDialog simple
-        _ = DisplayMessage("Succès", $"Serveur {newServer.Name} configuré !");
+        try
+        {
+            using var db = new WinBridge.Core.Data.AppDbContext();
+            db.Servers.Add(newServer);
+            await db.SaveChangesAsync();
+
+            _ = DisplayMessage("Succès", $"Le serveur {newServer.Name} a été enregistré en base de données !");
+
+            // Optionnel : Vider les champs après l'enregistrement
+            TxtName.Text = TxtHost.Text = TxtUser.Text = TxtPassword.Password = "";
+        }
+        catch (Exception ex)
+        {
+            _ = DisplayMessage("Erreur", "Impossible de sauvegarder : " + ex.Message);
+        }
     }
 
     private async System.Threading.Tasks.Task DisplayMessage(string title, string content)

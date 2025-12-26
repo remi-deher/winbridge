@@ -35,6 +35,10 @@ namespace WinBridge.App
         public App()
         {
             InitializeComponent();
+
+            // Créer la base de données si elle n'existe pas
+            using var db = new WinBridge.Core.Data.AppDbContext();
+            db.Database.EnsureCreated();
         }
 
         /// <summary>
