@@ -1,0 +1,26 @@
+<Page
+    x:Class="WinBridge.App.Views.ServerListPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:WinBridge.Models.Entities"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Padding="20">
+        <GridView x:Name="ServerGrid" SelectionMode="None">
+            <GridView.ItemTemplate>
+                <DataTemplate x:DataType="models:ServerModel">
+                    <StackPanel Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" 
+                                Padding="15" CornerRadius="8" Margin="10" Width="200" Spacing="5">
+                        <SymbolIcon Symbol="FourBars" HorizontalAlignment="Left" Foreground="{ThemeResource SystemAccentColor}"/>
+                        <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Text="{x:Bind Host}" Opacity="0.7"/>
+                        <Button Content="Connecter" HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="BtnConnect_Click"/>
+                    </StackPanel>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+        </GridView>
+    </Grid>
+</Page>

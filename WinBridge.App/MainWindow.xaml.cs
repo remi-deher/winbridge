@@ -36,7 +36,7 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             switch (tag)
             {
                 case "Servers":
-                    ContentFrame.Navigate(typeof(AddServerPage));
+                    ContentFrame.Navigate(typeof(ServerListPage));
                     break;
             }
         }
