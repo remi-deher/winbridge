@@ -1,24 +1,34 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace WinBridge.Models.Entities;
 
 public class ServerModel
 {
+    [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required]
     public string Name { get; set; } = string.Empty;
+
+    [Required]
     public string Host { get; set; } = string.Empty;
+
     public int Port { get; set; } = 22;
+
+    [Required]
     public string Username { get; set; } = string.Empty;
 
-    // --- Stratégies d'authentification ---
+    public string? Password { get; set; }
 
-    // 1. Clé stockée dans la base WinBridge (Vault)
+    public bool UseSshAgent { get; set; }
     public bool UsePrivateKey { get; set; }
     public Guid? SshKeyId { get; set; }
 
-    // 2. Agent SSH (1Password, OpenSSH, Pageant)
-    public bool UseSshAgent { get; set; }
-
-    // 3. Mot de passe (Repli)
-    public string? Password { get; set; }
+    // --- CACHE ---
+    public string? CachedOsInfo { get; set; }
+    public string? CachedKernelVersion { get; set; } // NOUVEAU
+    public string? CachedIpAddress { get; set; }
+    public string? CachedUptime { get; set; }
+    public DateTime? LastSeen { get; set; }
 }

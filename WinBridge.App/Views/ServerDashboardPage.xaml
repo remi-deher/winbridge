@@ -16,13 +16,38 @@
 
         <ScrollViewer Grid.Column="0" Padding="40">
             <StackPanel Spacing="24">
-                <StackPanel Spacing="8">
-                    <TextBlock x:Name="TxtServerName" Text="Chargement..." Style="{StaticResource TitleTextBlockStyle}" FontSize="32"/>
-                    <StackPanel Orientation="Horizontal" Spacing="8" Opacity="0.6">
-                        <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/>
-                        <TextBlock x:Name="TxtServerHost" Text="..." Style="{StaticResource SubtitleTextBlockStyle}"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Spacing="8">
+                        <TextBlock x:Name="TxtServerName" Text="Chargement..." Style="{StaticResource TitleTextBlockStyle}" FontSize="32"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Opacity="0.6">
+                            <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/>
+                            <TextBlock x:Name="TxtServerHost" Text="..." Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+
+                        <Button x:Name="BtnShutdown" Click="BtnShutdown_Click" ToolTipService.ToolTip="Éteindre le serveur">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}"/>
+                                <TextBlock Text="Éteindre" Foreground="{ThemeResource SystemAccentColor}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="BtnReboot" Click="BtnReboot_Click" ToolTipService.ToolTip="Redémarrer le serveur">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE777;" FontFamily="Segoe MDL2 Assets" Foreground="#D13438"/>
+                                <TextBlock Text="Redémarrer" Foreground="#D13438"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <Rectangle Height="1" Fill="{ThemeResource CardStrokeColorDefaultBrush}" Margin="0,10"/>
 
@@ -32,7 +57,7 @@
                             <FontIcon Glyph="&#xE930;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}" FontSize="24"/>
                             <TextBlock Text="Connexion SSH Active" Style="{StaticResource SubtitleTextBlockStyle}"/>
                         </StackPanel>
-                        <TextBlock Text="Le canal de communication chiffré est établi. Vous pouvez utiliser le terminal interactif sur la droite." 
+                        <TextBlock Text="Terminal prêt. Le canal de communication est sécurisé." 
                                    Style="{StaticResource BodyTextBlockStyle}" Opacity="0.7"/>
                     </StackPanel>
                 </Grid>
@@ -42,7 +67,7 @@
 
         <Grid Grid.Column="1" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="300" x:Name="RowTerminal"/>
+                <RowDefinition Height="350" x:Name="RowTerminal"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -51,12 +76,16 @@
             <StackPanel Grid.Row="1" Padding="24" Spacing="24">
                 <TextBlock Text="Métriques en direct" Style="{StaticResource SubtitleTextBlockStyle}"/>
 
-                <Grid ColumnSpacing="12" RowSpacing="12">
+                <Grid ColumnSpacing="12" RowSpacing="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -68,15 +97,39 @@
                         <TextBlock x:Name="lblOs" Text="..." FontWeight="SemiBold"/>
                     </StackPanel>
 
-                    <FontIcon Grid.Row="1" Grid.Column="0" Glyph="&#xE823;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <FontIcon Grid.Row="1" Grid.Column="0" Glyph="&#xE74C;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
                     <StackPanel Grid.Row="1" Grid.Column="1">
+                        <TextBlock Text="Version du Noyau" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                        <TextBlock x:Name="lblKernel" Text="..." FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <FontIcon Grid.Row="2" Grid.Column="0" Glyph="&#xE823;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <StackPanel Grid.Row="2" Grid.Column="1">
                         <TextBlock Text="Uptime" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
                         <TextBlock x:Name="lblUptime" Text="..." FontWeight="SemiBold"/>
                     </StackPanel>
 
-                    <FontIcon Grid.Row="2" Grid.Column="0" Glyph="&#xEDA2;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
-                    <StackPanel Grid.Row="2" Grid.Column="1">
-                        <TextBlock Text="Disque (Root)" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                    <FontIcon Grid.Row="3" Grid.Column="0" Glyph="&#xE809;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <StackPanel Grid.Row="3" Grid.Column="1">
+                        <TextBlock Text="Adresse IP" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                        <TextBlock x:Name="lblIp" Text="..." FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <FontIcon Grid.Row="4" Grid.Column="0" Glyph="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <StackPanel Grid.Row="4" Grid.Column="1">
+                        <TextBlock Text="Charge CPU" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                        <TextBlock x:Name="lblCpu" Text="..." FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <FontIcon Grid.Row="5" Grid.Column="0" Glyph="&#xE967;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <StackPanel Grid.Row="5" Grid.Column="1">
+                        <TextBlock Text="RAM Utilisée" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
+                        <TextBlock x:Name="lblRam" Text="..." FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <FontIcon Grid.Row="6" Grid.Column="0" Glyph="&#xEDA2;" FontFamily="Segoe MDL2 Assets" Opacity="0.5"/>
+                    <StackPanel Grid.Row="6" Grid.Column="1">
+                        <TextBlock Text="Disque Principal" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.6"/>
                         <TextBlock x:Name="lblDisk" Text="..." FontWeight="SemiBold"/>
                     </StackPanel>
                 </Grid>
