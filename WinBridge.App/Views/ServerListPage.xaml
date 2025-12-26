@@ -21,7 +21,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel Spacing="4">
                 <TextBlock Text="Serveurs" Style="{StaticResource TitleTextBlockStyle}"/>
-                <TextBlock Text="Gérez vos connexions SSH" Style="{StaticResource BodyTextBlockStyle}" Opacity="0.6"/>
+                <TextBlock Text="GÃ©rez vos connexions SSH" Style="{StaticResource BodyTextBlockStyle}" Opacity="0.6"/>
             </StackPanel>
             <Button Grid.Column="1" Click="BtnAddServer_Click" Style="{StaticResource AccentButtonStyle}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -76,7 +76,7 @@
 
             <ScrollViewer Grid.Row="1">
                 <StackPanel>
-                    <TextBlock x:Name="TxtEmpty" Text="Aucun serveur trouvé." 
+                    <TextBlock x:Name="TxtEmpty" Text="Aucun serveur trouvÃ©." 
                                HorizontalAlignment="Center" Margin="0,60,0,0" Opacity="0.5" Visibility="Collapsed"/>
 
                     <GridView x:Name="ServerGrid" SelectionMode="None">
