@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WinBridge.Core.Data;
@@ -13,6 +14,9 @@ namespace WinBridge.App.Views;
 public sealed partial class ServerListPage : Page
 {
     private ComboBox? _cmbKeysRef;
+
+    // Liste complète en mémoire pour le filtrage rapide
+    private List<ServerModel> _allServers = new();
 
     public ServerListPage()
     {
@@ -28,64 +32,179 @@ public sealed partial class ServerListPage : Page
     private void LoadServers()
     {
         using var db = new AppDbContext();
-        var list = db.Servers.ToList();
-        ServerGrid.ItemsSource = list;
+        // On charge tout dans la liste mémoire, trié par nom
+        _allServers = db.Servers.OrderBy(s => s.Name).ToList();
+
+        // On applique les filtres actuels
+        ApplyFilters();
+    }
+
+    // --- LOGIQUE DE FILTRAGE ---
+
+    private void OnFilterChanged(object sender, object e)
+    {
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        // ---------------------------------------------------------
+        // CORRECTION DU PLANTAGE (NullReferenceException)
+        // On vérifie que tous les contrôles XAML sont bien chargés
+        // avant d'essayer de lire leurs propriétés.
+        // ---------------------------------------------------------
+        if (TxtSearch == null || CmbOsFilter == null || ServerGrid == null || _allServers == null)
+            return;
+
+        // 1. On part de la liste complète en mémoire
+        IEnumerable<ServerModel> query = _allServers;
+
+        // 2. Filtre Texte (Recherche dans Nom ou Host/IP)
+        var searchText = TxtSearch.Text?.Trim().ToLower();
+        if (!string.IsNullOrEmpty(searchText))
+        {
+            query = query.Where(s =>
+                (s.Name != null && s.Name.ToLower().Contains(searchText)) ||
+                (s.Host != null && s.Host.ToLower().Contains(searchText))
+            );
+        }
+
+        // 3. Filtre OS (Basé sur la ComboBox)
+        if (CmbOsFilter.SelectedItem is ComboBoxItem item && item.Tag is string tag && tag != "All")
+        {
+            if (tag == "Windows")
+            {
+                query = query.Where(s => s.CachedOsInfo != null && s.CachedOsInfo.Contains("Windows", StringComparison.OrdinalIgnoreCase));
+            }
+            else if (tag == "Linux")
+            {
+                query = query.Where(s => s.CachedOsInfo == null || !s.CachedOsInfo.Contains("Windows", StringComparison.OrdinalIgnoreCase));
+            }
+            else if (tag == "CentOS")
+            {
+                query = query.Where(s => s.CachedOsInfo != null &&
+                    (s.CachedOsInfo.Contains("CentOS", StringComparison.OrdinalIgnoreCase) ||
+                     s.CachedOsInfo.Contains("Alma", StringComparison.OrdinalIgnoreCase) ||
+                     s.CachedOsInfo.Contains("Rocky", StringComparison.OrdinalIgnoreCase)));
+            }
+            else
+            {
+                // Debian, Ubuntu, Arch...
+                query = query.Where(s => s.CachedOsInfo != null && s.CachedOsInfo.Contains(tag, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        // 4. Mise à jour de l'interface
+        var filteredList = query.ToList();
+        ServerGrid.ItemsSource = filteredList;
 
         if (TxtEmpty != null)
         {
-            TxtEmpty.Visibility = list.Any() ? Visibility.Collapsed : Visibility.Visible;
+            TxtEmpty.Visibility = filteredList.Any() ? Visibility.Collapsed : Visibility.Visible;
+            TxtEmpty.Text = filteredList.Any() ? "" : "Aucun serveur ne correspond à votre recherche.";
         }
     }
 
-    // --- CORRECTION CRITIQUE ICI ---
+    // --- ACTIONS BOUTONS ---
+
+    private void BtnAddServer_Click(object sender, RoutedEventArgs e)
+    {
+        _ = ShowServerDialog(null);
+    }
+
+    private void BtnEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.DataContext is ServerModel server)
+        {
+            _ = ShowServerDialog(server);
+        }
+    }
+
+    private async void BtnDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.DataContext is ServerModel server)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Supprimer le serveur ?",
+                Content = $"Voulez-vous vraiment supprimer \"{server.Name}\" ?\nCette action est irréversible.",
+                PrimaryButtonText = "Supprimer",
+                CloseButtonText = "Annuler",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                using var db = new AppDbContext();
+                db.Servers.Remove(server);
+                await db.SaveChangesAsync();
+                LoadServers(); // Recharger la liste
+            }
+        }
+    }
+
     private void BtnConnect_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.DataContext is ServerModel server)
         {
-            // On navigue vers le nouveau tableau de bord (Cockpit)
-            // C'est ça qui affichera la nouvelle interface avec le terminal à droite
             this.Frame.Navigate(typeof(ServerDashboardPage), server);
         }
     }
 
-    private async void BtnAddServer_Click(object sender, RoutedEventArgs e)
+    // --- LOGIQUE DIALOGUE (AJOUT / EDIT) ---
+
+    private async Task ShowServerDialog(ServerModel? serverToEdit)
     {
+        bool isEdit = serverToEdit != null;
         var stack = new StackPanel { Spacing = 12, MinWidth = 350 };
 
-        var txtName = new TextBox { Header = "Nom du serveur (ex: Prod)" };
-        var txtHost = new TextBox { Header = "IP ou Domaine" };
-        var numPort = new NumberBox { Header = "Port SSH", Value = 22, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
-        var txtUser = new TextBox { Header = "Utilisateur", Text = "root" };
+        var txtName = new TextBox { Header = "Nom du serveur", Text = serverToEdit?.Name ?? "" };
+        var txtHost = new TextBox { Header = "IP ou Domaine", Text = serverToEdit?.Host ?? "" };
+        var numPort = new NumberBox { Header = "Port SSH", Value = serverToEdit?.Port ?? 22, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
+        var txtUser = new TextBox { Header = "Utilisateur", Text = serverToEdit?.Username ?? "root" };
 
         var lblAuth = new TextBlock { Text = "Méthode d'authentification", Margin = new Thickness(0, 10, 0, 0), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
-        var radioPassword = new RadioButton { Content = "Mot de passe", IsChecked = true, GroupName = "Auth" };
+        var radioPassword = new RadioButton { Content = "Mot de passe", GroupName = "Auth" };
         var radioKey = new RadioButton { Content = "Clé Privée (Vault)", GroupName = "Auth" };
         var radioAgent = new RadioButton { Content = "Agent SSH (1Password / OpenSSH)", GroupName = "Auth" };
         var txtPassword = new PasswordBox { Header = "Mot de passe" };
 
         _cmbKeysRef = new ComboBox
         {
-            Header = "Sélectionner une clé stockée",
+            Header = "Sélectionner une clé",
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Visibility = Visibility.Collapsed,
             DisplayMemberPath = "Name",
             SelectedValuePath = "Id"
         };
 
-        RefreshKeyList();
-
-        _cmbKeysRef.SelectionChanged += async (s, args) =>
+        // Configuration initiale (Edit vs New)
+        if (isEdit)
         {
-            if (_cmbKeysRef.SelectedItem is SshKeyModel selected && selected.Id == Guid.Empty)
-            {
-                _cmbKeysRef.SelectedItem = null;
-                await ShowAddKeyDialog();
-            }
-        };
+            if (serverToEdit!.UseSshAgent) radioAgent.IsChecked = true;
+            else if (serverToEdit.UsePrivateKey) radioKey.IsChecked = true;
+            else radioPassword.IsChecked = true;
+            txtPassword.Password = serverToEdit.Password ?? "";
+        }
+        else
+        {
+            radioPassword.IsChecked = true;
+        }
 
-        radioPassword.Checked += (s, a) => { txtPassword.Visibility = Visibility.Visible; _cmbKeysRef.Visibility = Visibility.Collapsed; };
-        radioKey.Checked += (s, a) => { txtPassword.Visibility = Visibility.Collapsed; _cmbKeysRef.Visibility = Visibility.Visible; };
-        radioAgent.Checked += (s, a) => { txtPassword.Visibility = Visibility.Collapsed; _cmbKeysRef.Visibility = Visibility.Collapsed; };
+        void UpdateVisibility()
+        {
+            txtPassword.Visibility = radioPassword.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            _cmbKeysRef.Visibility = radioKey.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        radioPassword.Checked += (s, a) => UpdateVisibility();
+        radioKey.Checked += (s, a) => UpdateVisibility();
+        radioAgent.Checked += (s, a) => UpdateVisibility();
+        UpdateVisibility();
+
+        // Chargement des clés
+        RefreshKeyList(serverToEdit?.SshKeyId);
 
         stack.Children.Add(txtName);
         stack.Children.Add(txtHost);
@@ -98,47 +217,73 @@ public sealed partial class ServerListPage : Page
         stack.Children.Add(txtPassword);
         stack.Children.Add(_cmbKeysRef);
 
+        bool wantsToAddKey = false;
+
+        // Gestionnaire pour détecter "Ajouter une clé"
+        _cmbKeysRef.SelectionChanged += (s, args) =>
+        {
+            if (_cmbKeysRef.SelectedItem is SshKeyModel selected && selected.Id == Guid.Empty)
+            {
+                _cmbKeysRef.SelectedItem = null;
+                wantsToAddKey = true;
+                // On cache le dialogue parent pour éviter le conflit WinUI "Double Dialog"
+                if (stack.Parent is ContentDialog parentDialog) parentDialog.Hide();
+            }
+        };
+
         var dialog = new ContentDialog
         {
-            Title = "Nouveau Serveur",
-            PrimaryButtonText = "Ajouter",
+            Title = isEdit ? "Modifier le serveur" : "Nouveau Serveur",
+            PrimaryButtonText = "Enregistrer",
             CloseButtonText = "Annuler",
             DefaultButton = ContentDialogButton.Primary,
             Content = stack,
             XamlRoot = this.XamlRoot
         };
 
-        var result = await dialog.ShowAsync();
-
-        if (result == ContentDialogResult.Primary)
+        // Boucle pour gérer l'interruption "Ajouter une clé"
+        while (true)
         {
-            if (string.IsNullOrWhiteSpace(txtName.Text) || string.IsNullOrWhiteSpace(txtHost.Text)) return;
+            var result = await dialog.ShowAsync();
 
-            var newServer = new ServerModel
+            if (wantsToAddKey)
             {
-                Name = txtName.Text,
-                Host = txtHost.Text,
-                Port = (int)numPort.Value,
-                Username = txtUser.Text,
-                UseSshAgent = radioAgent.IsChecked == true,
-                UsePrivateKey = radioKey.IsChecked == true
-            };
-
-            if (newServer.UsePrivateKey)
-            {
-                if (_cmbKeysRef.SelectedValue is Guid keyId && keyId != Guid.Empty)
-                    newServer.SshKeyId = keyId;
-                else return;
-            }
-            else if (!newServer.UseSshAgent)
-            {
-                newServer.Password = txtPassword.Password;
+                wantsToAddKey = false;
+                await ShowAddKeyDialog(); // Ouvrir le dialogue de clé
+                RefreshKeyList();         // Rafraîchir la liste
+                if (_cmbKeysRef.Items.Count > 1) _cmbKeysRef.SelectedIndex = _cmbKeysRef.Items.Count - 1;
+                continue; // On réaffiche le dialogue serveur
             }
 
-            using var db = new AppDbContext();
-            db.Servers.Add(newServer);
-            await db.SaveChangesAsync();
-            LoadServers();
+            if (result == ContentDialogResult.Primary)
+            {
+                if (string.IsNullOrWhiteSpace(txtName.Text) || string.IsNullOrWhiteSpace(txtHost.Text)) break;
+
+                using var db = new AppDbContext();
+                ServerModel server;
+
+                if (isEdit)
+                    server = db.Servers.FirstOrDefault(s => s.Id == serverToEdit!.Id) ?? new ServerModel();
+                else
+                {
+                    server = new ServerModel();
+                    db.Servers.Add(server);
+                }
+
+                server.Name = txtName.Text;
+                server.Host = txtHost.Text;
+                server.Port = (int)numPort.Value;
+                server.Username = txtUser.Text;
+                server.UseSshAgent = radioAgent.IsChecked == true;
+                server.UsePrivateKey = radioKey.IsChecked == true;
+                server.Password = (!server.UseSshAgent && !server.UsePrivateKey) ? txtPassword.Password : null;
+                server.SshKeyId = server.UsePrivateKey && _cmbKeysRef.SelectedValue is Guid kId ? kId : null;
+
+                await db.SaveChangesAsync();
+                LoadServers(); // Rafraîchir la liste principale
+                break;
+            }
+            else break; // Annuler
         }
     }
 
@@ -149,8 +294,9 @@ public sealed partial class ServerListPage : Page
         var keys = db.Keys.OrderBy(k => k.Name).ToList();
         keys.Insert(0, new SshKeyModel { Id = Guid.Empty, Name = "+ Ajouter une nouvelle clé..." });
         _cmbKeysRef.ItemsSource = keys;
+
         if (selectedId.HasValue) _cmbKeysRef.SelectedValue = selectedId;
-        else if (keys.Count > 1) _cmbKeysRef.SelectedIndex = 1;
+        else if (keys.Count > 1 && _cmbKeysRef.SelectedIndex == -1) _cmbKeysRef.SelectedIndex = 1;
     }
 
     private async Task ShowAddKeyDialog()
@@ -192,14 +338,8 @@ public sealed partial class ServerListPage : Page
 
                 var vault = new VaultService();
                 vault.SaveKeyContent(newKey.Id.ToString(), txtContent.Text, txtPass.Password);
-
-                RefreshKeyList(newKey.Id);
             }
             catch { }
-        }
-        else
-        {
-            _cmbKeysRef.SelectedIndex = _cmbKeysRef.Items.Count > 1 ? 1 : -1;
         }
     }
 }
