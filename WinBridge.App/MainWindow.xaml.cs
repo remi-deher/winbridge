@@ -49,6 +49,14 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
             case "Keys":
                 ContentFrame.Navigate(typeof(KeysPage));
                 break;
+
+            case "Extensions":
+                ContentFrame.Navigate(typeof(ExtensionsPage));
+                break;
+
+            case "ModulesManagement":
+                ContentFrame.Navigate(typeof(ModulesManagementPage));
+                break;
                 
             case "DevTools":
                 ContentFrame.Navigate(typeof(DevToolsPage));

@@ -11,6 +11,9 @@
             <NavigationViewItem Content="Tableau de bord" Icon="Home" Tag="Dashboard"/>
             <NavigationViewItem Content="Serveurs" Icon="AllApps" Tag="Servers"/>
             <NavigationViewItem Content="Gestion des Clés" Icon="Permissions" Tag="Keys"/>
+            <NavigationViewItemSeparator/>
+            <NavigationViewItem Content="Extensions" Icon="Library" Tag="Extensions"/>
+            <NavigationViewItem Content="Configuration Modules" Icon="Manage" Tag="ModulesManagement"/>
         </NavigationView.MenuItems>
 
         <NavigationView.FooterMenuItems>
