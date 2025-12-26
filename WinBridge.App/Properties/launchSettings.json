@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WinBridge.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "WinBridge.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
