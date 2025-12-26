@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<SshKeyModel> Keys { get; set; }
     public DbSet<ExtensionSource> ExtensionSources { get; set; }
     public DbSet<ModuleAssignment> ModuleAssignments { get; set; }
+    public DbSet<ServerGroup> ServerGroups { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
