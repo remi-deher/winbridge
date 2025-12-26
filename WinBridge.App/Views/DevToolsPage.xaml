@@ -1,0 +1,34 @@
+<Page
+    x:Class="WinBridge.App.Views.DevToolsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Mode Développeur - Side-loading" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,20">
+            <Button x:Name="LoadButton" Content="Charger Module (.dll)" Click="LoadButton_Click"/>
+            <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Padding="10" CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="ModuleInfoTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,10"/>
+                <ContentControl x:Name="ModuleContent" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

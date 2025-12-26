@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WinBridge.Models\WinBridge.Models.csproj" />
+    <ProjectReference Include="..\WinBridge.SDK\WinBridge.SDK.csproj" />
   </ItemGroup>
   
 </Project>

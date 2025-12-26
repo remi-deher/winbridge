@@ -13,6 +13,14 @@
             <NavigationViewItem Content="Gestion des Clés" Icon="Permissions" Tag="Keys"/>
         </NavigationView.MenuItems>
 
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem Content="Mode Développeur" Tag="DevTools">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE943;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.FooterMenuItems>
+
         <Frame x:Name="ContentFrame"/>
     </NavigationView>
 </Window>

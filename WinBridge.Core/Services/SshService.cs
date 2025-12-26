@@ -10,7 +10,9 @@ using WinBridge.Models.Entities;
 
 namespace WinBridge.Core.Services;
 
-public class SshService : IDisposable
+using WinBridge.SDK;
+
+public class SshService : ISshService, IDisposable
 {
     private SshClient? _client;
     private ShellStream? _stream;

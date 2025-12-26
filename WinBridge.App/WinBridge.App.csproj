@@ -48,6 +48,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WinBridge.Core\WinBridge.Core.csproj" />
     <ProjectReference Include="..\WinBridge.Models\WinBridge.Models.csproj" />
+    <ProjectReference Include="..\WinBridge.SDK\WinBridge.SDK.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\ServerDashboardPage.xaml">

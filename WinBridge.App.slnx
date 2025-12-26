@@ -12,4 +12,5 @@
   </Project>
   <Project Path="WinBridge.Core/WinBridge.Core.csproj" Id="ca43ab77-cb21-4021-a249-3b289f40cf01" />
   <Project Path="WinBridge.Models/WinBridge.Models.csproj" Id="8989f605-1822-46fe-8a2f-fe02e98d71f1" />
+  <Project Path="WinBridge.SDK/WinBridge.SDK.csproj" />
 </Solution>
