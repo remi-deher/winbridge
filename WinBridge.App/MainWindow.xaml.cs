@@ -15,21 +15,21 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
         // Gestion de la navigation
         NavView.SelectionChanged += NavView_SelectionChanged;
 
-        // Au démarrage, on sélectionne le premier item (Dashboard) et on navigue
+        // Au dÃ©marrage, on sÃ©lectionne le premier item (Dashboard) et on navigue
         NavView.SelectedItem = NavView.MenuItems[0];
         ContentFrame.Navigate(typeof(DashboardPage));
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        // Gérer le clic sur le bouton Paramètres (en bas)
+        // GÃ©rer le clic sur le bouton ParamÃ¨tres (en bas)
         if (args.IsSettingsSelected)
         {
-            // ContentFrame.Navigate(typeof(SettingsPage)); // À créer plus tard si besoin
+            // ContentFrame.Navigate(typeof(SettingsPage)); // Ã€ crÃ©er plus tard si besoin
             return;
         }
 
-        // Vérifier qu'un item est bien sélectionné
+        // VÃ©rifier qu'un item est bien sÃ©lectionnÃ©
         var selectedItem = args.SelectedItemContainer as NavigationViewItem;
         if (selectedItem?.Tag == null) return;
 
@@ -48,6 +48,18 @@ public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
 
             case "Keys":
                 ContentFrame.Navigate(typeof(KeysPage));
+                break;
+
+            case "Extensions":
+                ContentFrame.Navigate(typeof(ExtensionsPage));
+                break;
+
+            case "ModulesManagement":
+                ContentFrame.Navigate(typeof(ModulesManagementPage));
+                break;
+                
+            case "DevTools":
+                ContentFrame.Navigate(typeof(DevToolsPage));
                 break;
         }
     }

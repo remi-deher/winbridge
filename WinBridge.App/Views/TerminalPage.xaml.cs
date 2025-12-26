@@ -1,235 +1,176 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Web.WebView2.Core;
 using System;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using WinBridge.App.Services;
 using WinBridge.Core.Services;
 using WinBridge.Models.Entities;
+using WinBridge.SDK;
+using System.Threading.Tasks;
 
-namespace WinBridge.App.Views;
-
-public sealed partial class TerminalPage : Page
+namespace WinBridge.App.Views
 {
-    private SshService _sshService = new SshService();
-    private ServerModel? _currentServer;
-
-    public TerminalPage()
+    public sealed partial class TerminalPage : Page
     {
-        this.InitializeComponent();
-        InitializeTerminal();
-    }
+        private ServerModel? _server;
+        private IRemoteService? _remoteService;
+        private readonly ModuleManager _moduleManager;
 
-    private async void InitializeTerminal()
-    {
-        // 1. Initialisation du moteur
-        await TermWebView.EnsureCoreWebView2Async();
-
-        // 2. Désactiver le menu contextuel par défaut du navigateur (clic droit)
-        // pour permettre notre propre gestion (Coller au clic droit comme Putty/Windows Terminal)
-        TermWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-
-        // 3. Charger le Terminal
-        TermWebView.NavigateToString(GetTerminalHtml());
-        TermWebView.WebMessageReceived += TermWebView_WebMessageReceived;
-
-        // Cache le chargement
-        if (LoadingRing != null)
+        public TerminalPage()
         {
-            LoadingRing.IsActive = false;
-            LoadingRing.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            this.InitializeComponent();
+            _moduleManager = new ModuleManager();
+            InitializeWebView();
         }
-    }
 
-    private void TermWebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
-    {
-        string message = args.TryGetWebMessageAsString();
-
-        if (message == "PASTE_REQ")
+        private async void InitializeWebView()
         {
-            // Gérer le "Coller" depuis le presse-papier Windows vers le SSH
-            PasteFromClipboard();
-        }
-        else if (message.StartsWith("COPY:"))
-        {
-            // Gérer le "Copier" (Sélection de texte -> Presse-papier Windows)
-            var textToCopy = message.Substring(5);
-            CopyToClipboard(textToCopy);
-        }
-        else
-        {
-            // Sinon, c'est une touche clavier standard
-            _sshService.SendData(message);
-        }
-    }
-
-    private void CopyToClipboard(string text)
-    {
-        var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-        dataPackage.SetText(text);
-        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-    }
-
-    private async void PasteFromClipboard()
-    {
-        var dataPackage = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
-        if (dataPackage.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
-        {
-            string text = await dataPackage.GetTextAsync();
-            _sshService.SendData(text);
-        }
-    }
-
-    protected override async void OnNavigatedTo(NavigationEventArgs e)
-    {
-        base.OnNavigatedTo(e);
-
-        if (e.Parameter is ServerModel server)
-        {
-            _currentServer = server;
-
-            _sshService.DataReceived += (data) =>
-            {
-                DispatcherQueue.TryEnqueue(async () =>
-                {
-                    // Encodage Base64 pour éviter les bugs de caractères spéciaux
-                    var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(data));
-                    if (TermWebView.CoreWebView2 != null)
-                    {
-                        await TermWebView.CoreWebView2.ExecuteScriptAsync($"writeBase64('{base64}')");
-                    }
-                });
-            };
-
             try
             {
-                await Task.Run(() => _sshService.Connect(server));
+                await TermWebView.EnsureCoreWebView2Async();
+                
+                // Initialization script for xterm.js would go here
+                // For now we set a placeholder to confirm it renders
+                TermWebView.NavigateToString(@"
+                    <html>
+                        <body style='background-color:#1e1e1e; color:white; font-family: Segoe UI, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center;'>
+                            <h2>Terminal Ready</h2>
+                        </body>
+                    </html>");
             }
             catch (Exception ex)
             {
-                await ShowErrorAndGoBack(ex.Message);
+                System.Diagnostics.Debug.WriteLine($"WebView Init Error: {ex.Message}");
             }
         }
-    }
 
-    protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
-    {
-        _sshService.Dispose();
-        TermWebView.WebMessageReceived -= TermWebView_WebMessageReceived;
-        base.OnNavigatingFrom(e);
-    }
-
-    private async Task ShowErrorAndGoBack(string message)
-    {
-        var dialog = new ContentDialog
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
-            Title = "Erreur",
-            Content = message,
-            CloseButtonText = "Retour",
-            XamlRoot = this.XamlRoot
-        };
-        await dialog.ShowAsync();
-        if (Frame.CanGoBack) Frame.GoBack();
-    }
+            base.OnNavigatedTo(e);
 
-    private string GetTerminalHtml()
-    {
-        return @"
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='utf-8' />
-        <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css' />
-        <script src='https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js'></script>
-        <script src='https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js'></script>
-        <script src='https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js'></script>
-        <style>
-            /* Fond transparent pour laisser WinUI gérer la couleur de fond (Mica/Acrylic possible) */
-            body { margin: 0; padding: 0; background-color: transparent; overflow: hidden; height: 100vh; user-select: none; }
-            /* Padding pour ne pas coller au bord de la fenêtre */
-            #terminal { width: 100%; height: 100%; padding: 8px; box-sizing: border-box; }
-            ::-webkit-scrollbar { display: none; }
-        </style>
-    </head>
-    <body>
-        <div id='terminal'></div>
-        <script>
-            // Palette EXACTE 'Campbell' (Défaut Windows Terminal)
-            const campbellTheme = {
-                background: '#0C0C0C', // Noir profond Windows
-                foreground: '#CCCCCC', // Gris clair
-                cursor: '#FFFFFF',
-                selectionBackground: '#FFFFFF40', // Sélection blanche semi-transparente
+            if (e.Parameter is ServerModel server)
+            {
+                _server = server;
                 
-                black: '#0C0C0C',
-                red: '#C50F1F',
-                green: '#13A10E',
-                yellow: '#C19C00',
-                blue: '#0037DA',
-                magenta: '#881798', // C'est ce rose qui manquait sur 'ARTEMIS'
-                cyan: '#3A96DD',
-                white: '#CCCCCC',
-                
-                brightBlack: '#767676',
-                brightRed: '#E74856',
-                brightGreen: '#16C60C',
-                brightYellow: '#F9F1A5',
-                brightBlue: '#3B78FF',
-                brightMagenta: '#B4009E',
-                brightCyan: '#61D6D6',
-                brightWhite: '#F2F2F2'
-            };
-
-            const term = new Terminal({
-                cursorBlink: true,
-                cursorStyle: 'bar',
-                // Stack de polices : Cascadia d'abord (la police native Windows 11), puis Consolas
-                fontFamily: 'Cascadia Mono, Consolas, monospace', 
-                fontSize: 14,
-                fontWeight: 'normal',
-                fontWeightBold: 'bold',
-                lineHeight: 1.1, // Espacement natif
-                theme: campbellTheme,
-                allowProposedApi: true
-            });
-            
-            const fitAddon = new FitAddon.FitAddon();
-            term.loadAddon(fitAddon);
-            term.loadAddon(new WebLinksAddon.WebLinksAddon());
-
-            term.open(document.getElementById('terminal'));
-            
-            // Astuce : On rend le terminal transparent pour le look moderne
-            term.options.theme.background = '#0C0C0C'; 
-
-            fitAddon.fit();
-            window.onresize = () => fitAddon.fit();
-
-            term.onData(e => window.chrome.webview.postMessage(e));
-
-            document.addEventListener('contextmenu', event => {
-                event.preventDefault();
-                window.chrome.webview.postMessage('PASTE_REQ');
-            });
-
-            term.onSelectionChange(() => {
-                if (term.hasSelection()) {
-                    window.chrome.webview.postMessage('COPY:' + term.getSelection());
+                // Factory Logic
+                if (_server.OperatingSystem == Models.Enums.ServerOsType.Windows && _server.UseWinRM)
+                {
+                    _remoteService = new WinRmService();
                 }
-            });
+                else
+                {
+                    _remoteService = new SshService();
+                }
+                
+                try 
+                {
+                    LoadingRing.IsActive = true;
+                    LoadingRing.Visibility = Visibility.Visible;
 
-            function writeBase64(b64) {
-                try {
-                    const str = atob(b64);
-                    const bytes = new Uint8Array(str.length);
-                    for (let i = 0; i < str.length; i++) {
-                        bytes[i] = str.charCodeAt(i);
-                    }
-                    term.write(bytes);
-                } catch (e) { console.error(e); }
+                    // Connection Polymorphism
+                    await Task.Run(() => 
+                    {
+                        if (_remoteService is SshService ssh) ssh.Connect(server);
+                        else if (_remoteService is WinRmService winrm) winrm.Connect(server);
+                    });
+                    
+                    LoadingRing.IsActive = false;
+                    LoadingRing.Visibility = Visibility.Collapsed;
+                    
+                    if (_remoteService is SshService sshStarted) sshStarted.StartTerminal();
+
+                    // Load Modules
+                    LoadModulesForServer(server.Id);
+                }
+                catch (Exception ex)
+                {
+                    LoadingRing.IsActive = false;
+                    LoadingRing.Visibility = Visibility.Collapsed;
+
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Erreur de Connexion",
+                        Content = $"Impossible de se connecter Ã  {_server.Host}: {ex.Message}",
+                        CloseButtonText = "Ok",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                }
             }
-        </script>
-    </body>
-    </html>";
+        }
+
+        private void LoadModulesForServer(Guid serverId)
+        {
+            ModulesPanel.Children.Clear();
+
+            var enabledModules = ModulesManagementPage.GetEnabledModulesForServer(serverId);
+
+            if (!enabledModules.Any())
+            {
+                ModulesPanel.Children.Add(new TextBlock { 
+                    Text = "Aucun module activÃ©.", 
+                    Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0,10,0,0)
+                });
+                return;
+            }
+
+            foreach (var extSource in enabledModules)
+            {
+                if (string.IsNullOrEmpty(extSource.LocalPath)) continue;
+
+                var result = _moduleManager.LoadModule(extSource.LocalPath);
+                if (result != null)
+                {
+                    var module = result.Value.Module;
+                    
+                    // Inject Global Context
+                    module.CurrentServer = _server;
+
+                    // Inject Services
+                    var services = new ServiceCollection();
+                    if (_remoteService != null)
+                    {
+                        services.AddSingleton<IRemoteService>(_remoteService);
+                        // Also register specific types just in case
+                        if (_remoteService is SshService ssh) services.AddSingleton<ISshService>(ssh);
+                    }
+                    
+                    var provider = services.BuildServiceProvider();
+
+                    try
+                    {
+                        module.Initialize(provider);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error init module {module.Name}: {ex.Message}");
+                        ModulesPanel.Children.Add(new TextBlock { Text = $"Erreur {module.Name}: {ex.Message}", Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SystemFillColorCriticalBrush"] });
+                        continue;
+                    }
+
+                    var expander = new Expander
+                    {
+                        Header = module.Name,
+                        IsExpanded = true,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        Content = module.View ?? new TextBlock { Text = "No View provided" },
+                        Margin = new Thickness(0,0,0,10)
+                    };
+
+                    ModulesPanel.Children.Add(expander);
+                }
+            }
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+             base.OnNavigatingFrom(e);
+             (_remoteService as IDisposable)?.Dispose();
+        }
     }
 }
