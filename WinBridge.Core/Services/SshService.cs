@@ -1,8 +1,9 @@
 ﻿using Renci.SshNet;
-using SshNet.Agent; // Nécessite le package NuGet "SshNet.Agent"
+using SshNet.Agent;
 using System;
 using System.IO;
-using System.Linq; // INDISPENSABLE pour .ToArray() avec l'agent
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using WinBridge.Models.Entities;
@@ -16,7 +17,7 @@ public class SshService : IDisposable
     private bool _isDisposed;
     private readonly VaultService _vaultService;
 
-    // Événement pour renvoyer le texte du terminal à l'interface (WebView ou TextBlock)
+    // Événement pour envoyer le texte reçu vers l'UI
     public event Action<string>? DataReceived;
 
     public SshService()
@@ -28,85 +29,57 @@ public class SshService : IDisposable
     {
         ConnectionInfo connInfo;
 
-        // --- CAS 1 : AGENT SSH (1Password, OpenSSH, Pageant) ---
         if (server.UseSshAgent)
         {
             try
             {
-                // On se connecte au pipe local de l'agent (ex: \\.\pipe\openssh-ssh-agent)
                 var agent = new SshAgent();
-
-                // On récupère les identités (clés) disponibles dans l'agent
                 var identities = agent.RequestIdentities();
-
-                // On transforme ces identités en une méthode d'authentification par clé standard
-                // "identities.ToArray()" convertit la liste pour SSH.NET
                 var authMethod = new PrivateKeyAuthenticationMethod(server.Username, identities.ToArray());
-
                 connInfo = new ConnectionInfo(server.Host, server.Port, server.Username, authMethod);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Erreur Agent SSH : Impossible de récupérer les identités.\nVérifiez que 1Password/OpenSSH est lancé.\nDétail : {ex.Message}");
+                throw new Exception($"Erreur Agent SSH : {ex.Message}");
             }
         }
-        // --- CAS 2 : CLÉ PRIVÉE STOCKÉE (Vault) ---
         else if (server.UsePrivateKey && server.SshKeyId.HasValue)
         {
             var (keyContent, passphrase) = _vaultService.GetKeyContent(server.SshKeyId.Value.ToString());
+            if (string.IsNullOrWhiteSpace(keyContent)) throw new Exception("Clé introuvable.");
 
-            if (string.IsNullOrWhiteSpace(keyContent))
-                throw new Exception("La clé privée est vide ou introuvable dans le coffre-fort.");
-
-            // Nettoyage préventif
             keyContent = keyContent.Trim();
-
-            // Vérification basique du format PEM/OpenSSH
-            if (!keyContent.Contains("\n") && !keyContent.Contains("\r"))
-            {
-                throw new Exception("Format de clé invalide (tout sur une ligne). Assurez-vous d'avoir les sauts de ligne.");
-            }
-
             using var keyStream = new MemoryStream(Encoding.UTF8.GetBytes(keyContent));
-            PrivateKeyFile keyFile;
 
-            try
-            {
-                keyFile = string.IsNullOrEmpty(passphrase)
-                    ? new PrivateKeyFile(keyStream)
-                    : new PrivateKeyFile(keyStream, passphrase);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Lecture de la clé échouée : {ex.Message}");
-            }
+            PrivateKeyFile keyFile = string.IsNullOrEmpty(passphrase)
+                ? new PrivateKeyFile(keyStream)
+                : new PrivateKeyFile(keyStream, passphrase);
 
             connInfo = new ConnectionInfo(server.Host, server.Port, server.Username,
                 new PrivateKeyAuthenticationMethod(server.Username, keyFile));
         }
-        // --- CAS 3 : MOT DE PASSE ---
         else
         {
-            string password = server.Password ?? string.Empty;
             connInfo = new ConnectionInfo(server.Host, server.Port, server.Username,
-                new PasswordAuthenticationMethod(server.Username, password));
+                new PasswordAuthenticationMethod(server.Username, server.Password ?? ""));
         }
 
-        // --- CONNEXION ---
         connInfo.Timeout = TimeSpan.FromSeconds(10);
-
         _client = new SshClient(connInfo);
-        _client.Connect(); // Bloquant (à exécuter dans un Task.Run côté UI)
+        _client.Connect();
+    }
 
-        // Création du stream terminal (xterm)
-        // 80 colonnes, 24 lignes (sera redimensionné par xterm.js si géré, sinon valeur par défaut)
+    public void StartTerminal()
+    {
+        if (_client == null || !_client.IsConnected) return;
+
+        // On crée le Shell (Taille par défaut 80x24, sera ajustée dynamiquement)
         _stream = _client.CreateShellStream("xterm-256color", 80, 24, 800, 600, 1024);
 
-        // Boucle de lecture asynchrone
         Task.Run(async () =>
         {
             var buffer = new byte[4096];
-            while (_client is { IsConnected: true } && !_isDisposed && _stream != null)
+            while (_client.IsConnected && !_isDisposed && _stream != null)
             {
                 try
                 {
@@ -116,27 +89,48 @@ public class SshService : IDisposable
                         if (count > 0)
                         {
                             var text = Encoding.UTF8.GetString(buffer, 0, count);
-                            // Notifie l'UI (qui transmettra au JS via base64)
                             DataReceived?.Invoke(text);
                         }
                     }
-                    else
-                    {
-                        await Task.Delay(20); // Latence faible pour fluidité
-                    }
+                    else await Task.Delay(20);
                 }
-                catch
-                {
-                    break;
-                }
+                catch { break; }
             }
         });
     }
 
-    /// <summary>
-    /// Envoie des données brutes au serveur (pour les flèches, CTRL+C, etc.)
-    /// Sans ajouter de saut de ligne automatique.
-    /// </summary>
+    // --- CORRECTION DU REDIMENSIONNEMENT ---
+    public void ResizeTerminal(int cols, int rows)
+    {
+        if (_stream == null) return;
+
+        try
+        {
+            // 1. On récupère le champ privé "_channel" à l'intérieur du ShellStream
+            var channelField = _stream.GetType().GetField("_channel", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (channelField != null)
+            {
+                var channel = channelField.GetValue(_stream);
+
+                if (channel != null)
+                {
+                    // 2. On appelle SendWindowChangeRequest sur ce canal (et non sur le stream)
+                    var method = channel.GetType().GetMethod("SendWindowChangeRequest", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (method != null)
+                    {
+                        method.Invoke(channel, new object[] { (uint)cols, (uint)rows, (uint)(cols * 8), (uint)(rows * 16) });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Erreur lors du redimensionnement SSH : {ex.Message}");
+        }
+    }
+
     public void SendData(string data)
     {
         if (_stream != null && _stream.CanWrite)
@@ -147,38 +141,29 @@ public class SshService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Envoie une ligne de commande complète (avec \n à la fin).
-    /// Utile pour les scripts ou boutons macro.
-    /// </summary>
-    public void SendCommand(string command)
+    public async Task<string> ExecuteCommandAsync(string command)
     {
-        if (_stream != null && _stream.CanWrite)
+        if (_client == null || !_client.IsConnected) return "Non connecté";
+
+        return await Task.Run(() =>
         {
-            _stream.WriteLine(command);
-            _stream.Flush();
-        }
+            try
+            {
+                var cmd = _client.CreateCommand(command);
+                var result = cmd.Execute();
+                return result.Trim();
+            }
+            catch (Exception ex)
+            {
+                return $"Erreur: {ex.Message}";
+            }
+        });
     }
 
     public void Dispose()
     {
         if (_isDisposed) return;
         _isDisposed = true;
-
-        try
-        {
-            _stream?.Dispose();
-            if (_client != null && _client.IsConnected)
-            {
-                _client.Disconnect();
-            }
-            _client?.Dispose();
-        }
-        catch
-        {
-            // Ignorer les erreurs de fermeture
-        }
-
-        GC.SuppressFinalize(this);
+        try { _stream?.Dispose(); _client?.Dispose(); } catch { }
     }
 }
