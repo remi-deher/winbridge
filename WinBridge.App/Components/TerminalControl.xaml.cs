@@ -24,7 +24,7 @@ public sealed partial class TerminalControl : UserControl
     {
         _sshService = service;
         _sshService.DataReceived += OnDataReceived;
-        _sshService.StartTerminal(); // Démarre le shell interactif
+        _sshService.StartTerminal();
     }
 
     private void OnDataReceived(string data)
@@ -47,11 +47,36 @@ public sealed partial class TerminalControl : UserControl
         TermWebView.WebMessageReceived += TermWebView_WebMessageReceived;
     }
 
+    // --- INTERCEPTION DES MESSAGES JS (CLAVIER + RESIZE) ---
     private void TermWebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
         string message = args.TryGetWebMessageAsString();
-        // Ici vous pourrez ajouter la gestion du copier/coller plus tard
-        _sshService?.SendData(message);
+
+        if (message.StartsWith("RESIZE:"))
+        {
+            // Format du message : "RESIZE:150:40" (Cols:Rows)
+            var parts = message.Split(':');
+            if (parts.Length == 3 &&
+                int.TryParse(parts[1], out int cols) &&
+                int.TryParse(parts[2], out int rows))
+            {
+                // On synchronise le backend SSH
+                _sshService?.ResizeTerminal(cols, rows);
+            }
+        }
+        else if (message == "PASTE_REQ")
+        {
+            // Gestion coller (à implémenter si besoin)
+        }
+        else if (message.StartsWith("COPY:"))
+        {
+            // Gestion copier (à implémenter si besoin)
+        }
+        else
+        {
+            // Touche standard
+            _sshService?.SendData(message);
+        }
     }
 
     private void BtnExpand_Click(object sender, RoutedEventArgs e)
@@ -66,8 +91,6 @@ public sealed partial class TerminalControl : UserControl
         if (_sshService != null) _sshService.DataReceived -= OnDataReceived;
         try { TermWebView.Close(); } catch { }
     }
-
-    // HTML avec le correctif ResizeObserver intégré
     private string GetTerminalHtml()
     {
         return @"
@@ -93,14 +116,32 @@ public sealed partial class TerminalControl : UserControl
                     fontSize: 13, 
                     theme: { background: '#0C0C0C' } 
                 });
+                
                 const fitAddon = new FitAddon.FitAddon();
                 term.loadAddon(fitAddon);
                 term.open(document.getElementById('terminal'));
                 
-                // --- CORRECTIF AFFICHAGE ---
-                const resizeObserver = new ResizeObserver(() => { try { fitAddon.fit(); } catch {} });
+                // --- FONCTION DE SYNCHRONISATION ---
+                function fitAndNotify() {
+                    try {
+                        fitAddon.fit();
+                        
+                        // On récupère les nouvelles dimensions calculées par xterm
+                        const dims = fitAddon.proposeDimensions();
+                        if (dims) {
+                            // On envoie au C# pour mettre à jour le SshClient
+                            window.chrome.webview.postMessage('RESIZE:' + dims.cols + ':' + dims.rows);
+                        }
+                    } catch (e) { console.error(e); }
+                }
+
+                // On utilise ResizeObserver pour appeler notre fonction intelligente
+                const resizeObserver = new ResizeObserver(() => fitAndNotify());
                 resizeObserver.observe(document.getElementById('terminal'));
-                // ---------------------------
+                
+                // Double sécurité au démarrage
+                setTimeout(() => fitAndNotify(), 200);
+
 
                 term.onData(e => window.chrome.webview.postMessage(e));
                 

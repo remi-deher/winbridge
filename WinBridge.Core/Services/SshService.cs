@@ -3,6 +3,7 @@ using SshNet.Agent;
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using WinBridge.Models.Entities;
@@ -16,7 +17,7 @@ public class SshService : IDisposable
     private bool _isDisposed;
     private readonly VaultService _vaultService;
 
-    // Événement déclenché quand le terminal reçoit du texte
+    // Événement pour envoyer le texte reçu vers l'UI
     public event Action<string>? DataReceived;
 
     public SshService()
@@ -68,12 +69,11 @@ public class SshService : IDisposable
         _client.Connect();
     }
 
-    // --- CORRECTION ECRAN NOIR : Cette méthode lance le flux interactif ---
     public void StartTerminal()
     {
         if (_client == null || !_client.IsConnected) return;
 
-        // Création du Shell "xterm-256color" pour avoir les couleurs
+        // On crée le Shell (Taille par défaut 80x24, sera ajustée dynamiquement)
         _stream = _client.CreateShellStream("xterm-256color", 80, 24, 800, 600, 1024);
 
         Task.Run(async () =>
@@ -99,6 +99,38 @@ public class SshService : IDisposable
         });
     }
 
+    // --- CORRECTION DU REDIMENSIONNEMENT ---
+    public void ResizeTerminal(int cols, int rows)
+    {
+        if (_stream == null) return;
+
+        try
+        {
+            // 1. On récupère le champ privé "_channel" à l'intérieur du ShellStream
+            var channelField = _stream.GetType().GetField("_channel", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (channelField != null)
+            {
+                var channel = channelField.GetValue(_stream);
+
+                if (channel != null)
+                {
+                    // 2. On appelle SendWindowChangeRequest sur ce canal (et non sur le stream)
+                    var method = channel.GetType().GetMethod("SendWindowChangeRequest", BindingFlags.Public | BindingFlags.Instance);
+
+                    if (method != null)
+                    {
+                        method.Invoke(channel, new object[] { (uint)cols, (uint)rows, (uint)(cols * 8), (uint)(rows * 16) });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Erreur lors du redimensionnement SSH : {ex.Message}");
+        }
+    }
+
     public void SendData(string data)
     {
         if (_stream != null && _stream.CanWrite)
@@ -109,7 +141,6 @@ public class SshService : IDisposable
         }
     }
 
-    // --- POUR LES MODULES DU DASHBOARD (Info Système, Docker...) ---
     public async Task<string> ExecuteCommandAsync(string command)
     {
         if (_client == null || !_client.IsConnected) return "Non connecté";
@@ -133,11 +164,6 @@ public class SshService : IDisposable
     {
         if (_isDisposed) return;
         _isDisposed = true;
-        try
-        {
-            _stream?.Dispose();
-            _client?.Dispose();
-        }
-        catch { }
+        try { _stream?.Dispose(); _client?.Dispose(); } catch { }
     }
 }
