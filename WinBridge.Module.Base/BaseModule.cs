@@ -8,6 +8,7 @@ namespace WinBridge.Module.Base
 {
     public class BaseModule : IWinBridgeModule
     {
+        public virtual string UniqueId => "com.winbridge.basemodule";
         public string Name => "Gestionnaire Système (Base)";
         public string Version => "1.0.0";
         
