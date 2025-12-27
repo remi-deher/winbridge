@@ -5,10 +5,36 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:components="using:WinBridge.App.Components"
+    xmlns:sdk="using:WinBridge.SDK"
     mc:Ignorable="d"
     NavigationCacheMode="Disabled">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <SplitView x:Name="ModuleSplitView" DisplayMode="CompactOverlay" IsPaneOpen="False" OpenPaneLength="250" CompactPaneLength="48" PaneBackground="{ThemeResource LayerFillColorDefaultBrush}">
+        <SplitView.Pane>
+            <Grid>
+                <Grid.RowDefinitions>
+                     <RowDefinition Height="Auto"/>
+                     <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Button x:Name="BtnTogglePane" Click="BtnTogglePane_Click" Background="Transparent" BorderThickness="0" HorizontalAlignment="Left" Margin="6,8,0,0">
+                     <FontIcon Glyph="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+                
+                <ListView x:Name="ModuleList" Grid.Row="1" SelectionMode="Single" SelectionChanged="ModuleList_SelectionChanged" Padding="0,12,0,0">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="sdk:ModuleAction">
+                             <StackPanel Orientation="Horizontal" Spacing="16" Padding="10,8">
+                                 <FontIcon Glyph="{x:Bind IconGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                 <TextBlock Text="{x:Bind Title}" VerticalAlignment="Center"/>
+                             </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </SplitView.Pane>
+        <SplitView.Content>
+            <Grid>
+                 <Grid x:Name="DashboardView" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" x:Name="ColCenter"/>
             <ColumnDefinition Width="400" x:Name="ColRight"/>
@@ -146,5 +172,9 @@
                 </Grid>
             </StackPanel>
         </Grid>
-    </Grid>
+                 </Grid>
+                 <Frame x:Name="ModuleFrame" Visibility="Collapsed"/>
+            </Grid>
+        </SplitView.Content>
+    </SplitView>
 </Page>
