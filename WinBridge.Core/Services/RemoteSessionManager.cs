@@ -12,11 +12,38 @@ namespace WinBridge.Core.Services
     {
         private readonly ConcurrentDictionary<Guid, IRemoteService> _sessions = new();
         private readonly IBroadcastLogger _logger;
+        private readonly Timer _keepAliveTimer;
 
         public RemoteSessionManager(IBroadcastLogger logger)
         {
             _logger = logger;
             _logger.LogInfo("RemoteSessionManager démarré.", "SessionManager");
+
+            // Health Check every 30 seconds
+            _keepAliveTimer = new Timer(CheckHealth, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+        }
+
+        private void CheckHealth(object? state)
+        {
+            foreach (var kvp in _sessions)
+            {
+                var serverId = kvp.Key;
+                var service = kvp.Value;
+
+                try 
+                {
+                    // For SSH, this property reflects the underlying client state.
+                    // If KeepAliveInterval is set (which it is), SshClient will update this status if connection drops.
+                    if (!service.IsConnected)
+                    {
+                        _logger.LogError($"Connexion perdue pour le serveur {serverId} (Health Check).", "Monitor", serverId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Erreur monitor {serverId}: {ex.Message}", "Monitor", serverId);
+                }
+            }
         }
 
         public IRemoteService? GetSession(Guid serverId)
@@ -72,6 +99,7 @@ namespace WinBridge.Core.Services
 
         public void Dispose()
         {
+            _keepAliveTimer?.Dispose();
             foreach (var s in _sessions.Values)
             {
                 try { s.Disconnect(); } catch { }
