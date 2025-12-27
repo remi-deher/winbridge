@@ -60,6 +60,7 @@ namespace WinBridge.App.Views
 
                 UseAgentSwitch.IsOn = existing.UseSshAgent;
                 AgentPipeBox.Text = existing.SshAgentPipePath ?? "";
+                CheckAgentForwarding.IsChecked = existing.AllowAgentForwarding;
                 if (existing.SshKeyId.HasValue) KeyCombo.SelectedValue = existing.SshKeyId;
             }
             else
@@ -138,10 +139,11 @@ namespace WinBridge.App.Views
 
         private void UpdateAgentUi()
         {
-             if (UseAgentSwitch == null || AgentPipeBox == null || KeyCombo == null) return;
+             if (UseAgentSwitch == null || AgentPipeBox == null || KeyCombo == null || CheckAgentForwarding == null) return;
         
              bool isAgent = UseAgentSwitch.IsOn;
              AgentPipeBox.Visibility = isAgent ? Visibility.Visible : Visibility.Collapsed;
+             CheckAgentForwarding.Visibility = isAgent ? Visibility.Visible : Visibility.Collapsed;
              KeyCombo.IsEnabled = !isAgent;
         }
 
@@ -215,6 +217,7 @@ namespace WinBridge.App.Views
 
             Result.UseSshAgent = UseAgentSwitch.IsOn;
             Result.SshAgentPipePath = UseAgentSwitch.IsOn ? AgentPipeBox.Text : null;
+            Result.AllowAgentForwarding = CheckAgentForwarding.IsChecked ?? false;
 
             if (!Result.UseSshAgent && KeyCombo.SelectedValue is Guid keyId)
             {

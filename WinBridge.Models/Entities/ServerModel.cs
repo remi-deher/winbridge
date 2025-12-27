@@ -36,6 +36,7 @@ public class ServerModel
     public string? SshAgentPipePath { get; set; }
     public bool UsePrivateKey { get; set; }
     public Guid? SshKeyId { get; set; }
+    public bool AllowAgentForwarding { get; set; }
     
     // Config
     public WinBridge.Models.Enums.OSCategory OSFamily { get; set; } = WinBridge.Models.Enums.OSCategory.Linux;

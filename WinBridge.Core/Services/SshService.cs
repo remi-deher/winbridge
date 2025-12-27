@@ -28,10 +28,14 @@ public class SshService : ISshService, IRemoteService, IDisposable
     // Événement pour envoyer le texte reçu vers l'UI
     public event Action<string>? DataReceived;
 
-    public SshService(IBroadcastLogger logger, VaultService vaultService)
+    private SshAgent? _clientAgent;
+    private readonly SshAgentService _agentService;
+
+    public SshService(IBroadcastLogger logger, VaultService vaultService, SshAgentService agentService)
     {
         _logger = logger;
         _vaultService = vaultService;
+        _agentService = agentService;
     }
 
     private void Touch() => LastActivity = DateTime.Now;
@@ -46,6 +50,9 @@ public class SshService : ISshService, IRemoteService, IDisposable
         
         ConnectionInfo connInfo;
 
+        // Clean previous agent
+        _clientAgent = null;
+
         if (server.UseSshAgent)
         {
             try
@@ -56,13 +63,21 @@ public class SshService : ISshService, IRemoteService, IDisposable
                                      pipePath.Equals(@"\\.\pipe\openssh-ssh-agent", StringComparison.OrdinalIgnoreCase) ||
                                      pipePath.Equals("openssh-ssh-agent", StringComparison.OrdinalIgnoreCase);
 
-                var agent = !isDefaultPipe 
+                _clientAgent = !isDefaultPipe 
                              ? new SshAgent(pipePath) 
                              : new SshAgent();
 
-                var identities = agent.RequestIdentities();
+                var identities = _clientAgent.RequestIdentities();
                 var authMethod = new PrivateKeyAuthenticationMethod(server.Username, identities.ToArray());
                 connInfo = new ConnectionInfo(server.Host, server.Port, server.Username, authMethod);
+
+                if (server.AllowAgentForwarding)
+                {
+                    _logger.LogInfo("Activation du transfert d'agent SSH demandée.", "SSH", _serverId);
+                    // Hook for agent forwarding would go here
+                    // e.g. connInfo.ForwardAgent = true; (if supported)
+                    // or client.AddForwardedAgent(_clientAgent);
+                }
             }
             catch (Exception ex)
             {
