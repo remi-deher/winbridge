@@ -2,28 +2,82 @@
     x:Class="WinBridge.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:WinBridge.App"
+    xmlns:views="using:WinBridge.App.Views"
+    xmlns:components="using:WinBridge.App.Components" 
     Title="WinBridge - Admin Linux">
 
-    <NavigationView x:Name="NavView" 
-                    PaneDisplayMode="Left"
-                    IsSettingsVisible="True">
-        <NavigationView.MenuItems>
-            <NavigationViewItem Content="Tableau de bord" Icon="Home" Tag="Dashboard"/>
-            <NavigationViewItem Content="Serveurs" Icon="AllApps" Tag="Servers"/>
-            <NavigationViewItem Content="Gestion des Clés" Icon="Permissions" Tag="Keys"/>
-            <NavigationViewItemSeparator/>
-            <NavigationViewItem Content="Extensions" Icon="Library" Tag="Extensions"/>
-            <NavigationViewItem Content="Configuration Modules" Icon="Manage" Tag="ModulesManagement"/>
-        </NavigationView.MenuItems>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="Auto"/> 
+        </Grid.RowDefinitions>
 
-        <NavigationView.FooterMenuItems>
-            <NavigationViewItem Content="Mode Développeur" Tag="DevTools">
-                <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE943;"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-        </NavigationView.FooterMenuItems>
+        <!-- Main Tabs -->
+        <TabView x:Name="MainTabView" 
+                 Grid.Row="0"
+                 IsAddTabButtonVisible="False"
+                 CanReorderTabs="True"
+                 CanDragTabs="True"
+                 TabCloseRequested="MainTabView_TabCloseRequested">
+            <TabView.TabItems>
+                <TabViewItem Header="Accueil" IsClosable="False">
+                    <TabViewItem.IconSource>
+                        <SymbolIconSource Symbol="Home"/>
+                    </TabViewItem.IconSource>
+                    <!-- The original Navigation View -->
+                    <NavigationView x:Name="NavView" 
+                                    PaneDisplayMode="Left"
+                                    IsSettingsVisible="True"
+                                    SelectionChanged="NavView_SelectionChanged">
+                        <NavigationView.MenuItems>
+                            <NavigationViewItem Content="Tableau de bord" Icon="Home" Tag="Dashboard"/>
+                            <NavigationViewItem Content="Serveurs" Icon="AllApps" Tag="Servers"/> 
+                            <NavigationViewItem Content="Gestion des Clés" Icon="Permissions" Tag="Keys"/>
+                            <NavigationViewItemSeparator/>
+                            <NavigationViewItem Content="Extensions" Icon="Library" Tag="Extensions"/>
+                            <NavigationViewItem Content="Configuration Modules" Icon="Manage" Tag="ModulesManagement"/>
+                        </NavigationView.MenuItems>
 
-        <Frame x:Name="ContentFrame"/>
-    </NavigationView>
+                        <NavigationView.FooterMenuItems>
+                            <NavigationViewItem Content="Mode Développeur" Tag="DevTools">
+                                <NavigationViewItem.Icon>
+                                    <FontIcon Glyph="&#xE943;"/>
+                                </NavigationViewItem.Icon>
+                            </NavigationViewItem>
+                        </NavigationView.FooterMenuItems>
+
+                        <Frame x:Name="ContentFrame"/>
+                    </NavigationView>
+                </TabViewItem>
+            </TabView.TabItems>
+        </TabView>
+        
+        <!-- Log Panel Popup -->
+        <Grid x:Name="LogPanel" Grid.Row="1" Height="250" Visibility="Collapsed" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+            <components:LogsControl x:Name="GlobalLogsControl" />
+        </Grid>
+
+        <!-- Status Bar -->
+        <Grid Grid.Row="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="10,4" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock x:Name="TxtStatus" Text="Prêt" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="BtnLogs" Click="BtnLogs_Click" Padding="8,4" Background="Transparent" BorderThickness="0">
+                     <StackPanel Orientation="Horizontal" Spacing="6">
+                         <SymbolIcon Symbol="Memo"/>
+                         <TextBlock Text="Logs"/>
+                         <InfoBadge x:Name="BadgeLogs" Value="0" Visibility="Collapsed"/>
+                     </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+    </Grid>
 </Window>

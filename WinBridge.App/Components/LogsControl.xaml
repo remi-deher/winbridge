@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <local:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/>
+        <local:DateTimeFormatConverter x:Key="DateTimeFormatConverter"/>
     </UserControl.Resources>
 
     <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">

@@ -136,7 +136,16 @@ namespace WinBridge.App.Views
         {
             if (sender is Button btn && btn.DataContext is ServerModel server)
             {
-                Frame.Navigate(typeof(TerminalPage), server);
+                // Call MainWindow to open tab
+                if ((Application.Current as App)?.Window is MainWindow mainWindow)
+                {
+                    mainWindow.OpenServerTab(server);
+                }
+                else
+                {
+                    // Fallback to legacy navigation just in case
+                    Frame.Navigate(typeof(ServerDashboardPage), server);
+                }
             }
         }
     }
