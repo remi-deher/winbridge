@@ -13,13 +13,13 @@
         <local:DateTimeFormatConverter x:Key="DateTimeFormatConverter"/>
     </UserControl.Resources>
 
-    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
+    <Grid Background="#1E1E1E" RequestedTheme="Dark">
         <TabView IsAddTabButtonVisible="False" TabStripHeader="Logs">
             <TabViewItem Header="Serveur" IsClosable="False">
                 <TabViewItem.IconSource>
                     <SymbolIconSource Symbol="Remote"/>
                 </TabViewItem.IconSource>
-                <ListView x:Name="ListServerLogs" ItemsSource="{x:Bind ServerLogs, Mode=OneWay}" SelectionMode="None">
+                <ListView x:Name="ListServerLogs" ItemsSource="{x:Bind ServerLogs, Mode=OneWay}" SelectionMode="None" Background="#1E1E1E">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="broadcasting:LogMessage">
                             <TextBlock TextWrapping="Wrap" Foreground="{x:Bind Level, Converter={StaticResource LogLevelToColorConverter}}">
@@ -35,7 +35,7 @@
                 <TabViewItem.IconSource>
                     <SymbolIconSource Symbol="World"/>
                 </TabViewItem.IconSource>
-                 <ListView x:Name="ListGlobalLogs" ItemsSource="{x:Bind AllLogs, Mode=OneWay}" SelectionMode="None">
+                 <ListView x:Name="ListGlobalLogs" ItemsSource="{x:Bind AllLogs, Mode=OneWay}" SelectionMode="None" Background="#1E1E1E">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="broadcasting:LogMessage">
                             <TextBlock TextWrapping="Wrap" Foreground="{x:Bind Level, Converter={StaticResource LogLevelToColorConverter}}">

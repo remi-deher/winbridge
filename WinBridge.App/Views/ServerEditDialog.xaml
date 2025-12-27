@@ -110,6 +110,11 @@
         <StackPanel Grid.Row="6" Spacing="12">
             <ToggleSwitch x:Name="UseAgentSwitch" Header="Utiliser SSH Agent" Toggled="UseAgentSwitch_Toggled" OnContent="Activé" OffContent="Désactivé"/>
             <TextBox x:Name="AgentPipeBox" Header="Chemin du Pipe (Optionnel)" PlaceholderText="\\.\pipe\openssh-ssh-agent" Visibility="Collapsed"/>
+            <CheckBox x:Name="CheckAgentForwarding" Content="Activer le transfert d'agent SSH" Visibility="Collapsed" Margin="0,4,0,0">
+                 <ToolTipService.ToolTip>
+                     <ToolTip Content="Permet d'utiliser vos clés locales pour vous connecter à d'autres serveurs depuis cette machine sans copier vos clés."/>
+                 </ToolTipService.ToolTip>
+            </CheckBox>
             <ComboBox x:Name="KeyCombo" Header="Clé SSH (si pas d'agent)" HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
         </StackPanel>
     </Grid>

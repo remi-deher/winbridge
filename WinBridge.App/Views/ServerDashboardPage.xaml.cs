@@ -76,19 +76,35 @@ namespace WinBridge.App.Views
             try 
             {
                 // Basic Linux Commands
-                lblUptime.Text = await _remoteService.ExecuteCommandAsync("uptime -p");
-                lblKernel.Text = await _remoteService.ExecuteCommandAsync("uname -r");
-                lblOs.Text = await _remoteService.ExecuteCommandAsync("grep -oP '(?<=PRETTY_NAME=\").*?(?=\")' /etc/os-release");
-                lblIp.Text = await _remoteService.ExecuteCommandAsync("hostname -I | awk '{print $1}'");
+                var uptime = await _remoteService.ExecuteCommandAsync("uptime -p");
+                var kernel = await _remoteService.ExecuteCommandAsync("uname -r");
+                var os = await _remoteService.ExecuteCommandAsync("grep -oP '(?<=PRETTY_NAME=\").*?(?=\")' /etc/os-release");
+                var ip = await _remoteService.ExecuteCommandAsync("hostname -I | awk '{print $1}'");
+                var cpu = await _remoteService.ExecuteCommandAsync("cat /proc/loadavg | awk '{print $1}'");
+                var ram = await _remoteService.ExecuteCommandAsync("free -h | grep Mem | awk '{print $3 \"/\" $2}'");
+                var disk = await _remoteService.ExecuteCommandAsync("df -h / | tail -1 | awk '{print $4 \" free\"}'");
                 
-                // Simple load avg
-                lblCpu.Text = await _remoteService.ExecuteCommandAsync("cat /proc/loadavg | awk '{print $1}'");
+                lblUptime.Text = uptime;
+                lblKernel.Text = kernel;
+                lblOs.Text = os;
+                lblIp.Text = ip;
+                lblCpu.Text = cpu;
+                lblRam.Text = ram;
+                lblDisk.Text = disk;
+
+                // Save to DB to populate Server List cache
+                bool saveNeeded = false;
+                if (!string.IsNullOrWhiteSpace(os) && _server.CachedOsInfo != os) { _server.CachedOsInfo = os; saveNeeded = true; }
+                if (!string.IsNullOrWhiteSpace(kernel) && _server.CachedKernelVersion != kernel) { _server.CachedKernelVersion = kernel; saveNeeded = true; }
+                if (!string.IsNullOrWhiteSpace(ip) && _server.CachedIpAddress != ip) { _server.CachedIpAddress = ip; saveNeeded = true; }
                 
-                // Memory
-                lblRam.Text = await _remoteService.ExecuteCommandAsync("free -h | grep Mem | awk '{print $3 \"/\" $2}'");
-                
-                // Disk
-                lblDisk.Text = await _remoteService.ExecuteCommandAsync("df -h / | tail -1 | awk '{print $4 \" free\"}'");
+                if (saveNeeded)
+                {
+                    using var db = new WinBridge.Core.Data.AppDbContext();
+                    db.Servers.Update(_server);
+                    await db.SaveChangesAsync();
+                    App.RaiseServerListChanged();
+                }
             } 
             catch { }
         }

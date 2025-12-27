@@ -18,6 +18,7 @@ namespace WinBridge.App.Views
         public ServerListPage()
         {
             this.InitializeComponent();
+            App.ServerListChanged += (s, e) => DispatcherQueue.TryEnqueue(LoadServers);
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -148,5 +149,22 @@ namespace WinBridge.App.Views
                 }
             }
         }
+    }
+
+    public class OsToIconConverter : Microsoft.UI.Xaml.Data.IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is ServerOsType os)
+            {
+                // E714 = Windows Logo or E770 (Desktop)
+                // E713 = Server (Generic/Linux)
+                return os == ServerOsType.Windows ? "\uE770" : "\uE713"; 
+            }
+            return "\uE7F8";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language) 
+            => throw new NotImplementedException();
     }
 }
