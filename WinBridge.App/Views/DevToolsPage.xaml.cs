@@ -74,8 +74,8 @@ namespace WinBridge.App.Views
                             // Construire le Provider
                             var serviceProvider = services.BuildServiceProvider();
 
-                            // 2. Initialiser le module avec le Provider
-                            module.Initialize(serviceProvider);
+                            // 2. Initialiser le module avec le Provider et ModuleUIProvider
+                            module.Initialize(serviceProvider, new ModuleUIProvider(this.XamlRoot, null));
                             Log("Module initialisé avec ServiceProvider.");
                         }
                         catch (Exception initEx)
@@ -84,9 +84,10 @@ namespace WinBridge.App.Views
                         }
 
                         // Afficher la vue du module
-                        if (module.View != null)
+                        var view = module.GetModulePage();
+                        if (view != null)
                         {
-                            ModuleContent.Content = module.View;
+                            ModuleContent.Content = view;
                         }
                         else
                         {

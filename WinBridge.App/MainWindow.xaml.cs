@@ -4,6 +4,8 @@ using WinBridge.App.Views;
 using WinBridge.Core.Services;
 using WinBridge.Models.Entities;
 using WinBridge.SDK.Broadcasting;
+using WinBridge.SDK;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
@@ -155,6 +157,59 @@ public sealed partial class MainWindow : Window
             case "Extensions": ContentFrame.Navigate(typeof(ExtensionsPage)); break;
             case "ModulesManagement": ContentFrame.Navigate(typeof(ModulesManagementPage)); break;
             case "DevTools": ContentFrame.Navigate(typeof(DevToolsPage)); break;
+        }
+    }
+    // Command Palette Logic
+    private void ToggleCommandPalette(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        if (CommandPaletteOverlay.Visibility == Visibility.Visible)
+        {
+            CommandPaletteOverlay.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            CommandPaletteOverlay.Visibility = Visibility.Visible;
+            CmdPaletteSearch.Text = "";
+            CmdPaletteSearch.Focus(FocusState.Programmatic);
+            LoadModuleActions();
+        }
+    }
+
+    private void LoadModuleActions()
+    {
+         var actions = new System.Collections.Generic.List<ModuleAction>();
+         
+         if (MainTabView.SelectedItem is TabViewItem tvi && tvi.Tag is ServerModel server)
+         {
+             // TODO: Fetch real modules from ModuleRegistry/Server Context
+             // For now, mock basic actions
+             actions.Add(new ModuleAction { Title = "Open Terminal", Description = "Open SSH Terminal for " + server.Name, IconGlyph = "\uE756", Action = () => { /* Already open? */ } });
+             actions.Add(new ModuleAction { Title = "View Metrics", Description = "Go to dashboard", IconGlyph = "\uE9D2" });
+         }
+
+         CmdPaletteList.ItemsSource = actions;
+    }
+
+    private void CmdPaletteSearch_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        // TODO: Implement filtering based on text
+    }
+
+    private void CmdPaletteSearch_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            CommandPaletteOverlay.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void CmdPaletteList_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is ModuleAction action)
+        {
+            action.Execute();
+            CommandPaletteOverlay.Visibility = Visibility.Collapsed;
         }
     }
 }

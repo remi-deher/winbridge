@@ -10,23 +10,33 @@ namespace WinBridge.Module.Base
     {
         public string Name => "Gestionnaire Système (Base)";
         public string Version => "1.0.0";
-        public UIElement? View { get; private set; }
+        
+        private UIElement? _view;
         
         public ServerModel? CurrentServer { get; set; }
 
-        public void Initialize(IServiceProvider serviceProvider)
+        public void Initialize(IServiceProvider serviceProvider, IModuleUIProvider uiProvider)
         {
             var remoteService = serviceProvider.GetService<IRemoteService>();
             
             if (remoteService != null && CurrentServer != null)
             {
-                View = new BaseModuleView(remoteService, CurrentServer);
+                _view = new BaseModuleView(remoteService, CurrentServer);
             }
             else
             {
-                // Fallback or error view
-                View = new Microsoft.UI.Xaml.Controls.TextBlock { Text = "Erreur: Service distant ou Serveur non disponible." };
+                _view = new Microsoft.UI.Xaml.Controls.TextBlock { Text = "Erreur: Service distant ou Serveur non disponible." };
             }
+        }
+
+        public System.Collections.Generic.IEnumerable<ModuleAction> GetAvailableActions()
+        {
+             return new System.Collections.Generic.List<ModuleAction>();
+        }
+
+        public UIElement GetModulePage()
+        {
+            return _view ?? new Microsoft.UI.Xaml.Controls.TextBlock { Text = "Module non initialisé" };
         }
     }
 }

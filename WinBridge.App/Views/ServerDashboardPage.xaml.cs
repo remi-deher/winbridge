@@ -8,6 +8,8 @@ using WinBridge.Models.Entities;
 using WinBridge.Core.Services;
 using WinBridge.SDK;
 
+using WinBridge.SDK;
+
 namespace WinBridge.App.Views
 {
     public sealed partial class ServerDashboardPage : Page
@@ -30,6 +32,13 @@ namespace WinBridge.App.Views
                 _server = server;
                 TxtServerName.Text = _server.Name;
                 TxtServerHost.Text = _server.Host;
+
+                // Initialize Module Drawer
+                var modules = new System.Collections.Generic.List<ModuleAction>();
+                modules.Add(new ModuleAction { Title = "Tableau de Bord", IconGlyph = "\uE80F" }); 
+                
+                ModuleList.ItemsSource = modules;
+                ModuleList.SelectedIndex = 0;
 
                 if (App.Services != null)
                 {
@@ -140,6 +149,27 @@ namespace WinBridge.App.Views
         private async void BtnShutdown_Click(object sender, RoutedEventArgs e)
         {
              if (_remoteService != null) await _remoteService.ExecuteCommandAsync("sudo shutdown now");
+        }
+        private void BtnTogglePane_Click(object sender, RoutedEventArgs e)
+        {
+            ModuleSplitView.IsPaneOpen = !ModuleSplitView.IsPaneOpen;
+        }
+
+        private void ModuleList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+             if (ModuleList.SelectedItem is ModuleAction action)
+             {
+                 if (action.Title == "Tableau de Bord")
+                 {
+                     if (DashboardView != null) DashboardView.Visibility = Visibility.Visible;
+                     if (ModuleFrame != null) ModuleFrame.Visibility = Visibility.Collapsed;
+                 }
+                 else
+                 {
+                     if (DashboardView != null) DashboardView.Visibility = Visibility.Collapsed;
+                     if (ModuleFrame != null) ModuleFrame.Visibility = Visibility.Visible;
+                 }
+             }
         }
     }
 }

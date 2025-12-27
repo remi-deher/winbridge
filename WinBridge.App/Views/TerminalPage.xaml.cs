@@ -223,7 +223,8 @@ namespace WinBridge.App.Views
 
                     try
                     {
-                        module.Initialize(provider);
+                        // Enable terminal commands for module
+                        module.Initialize(provider, new ModuleUIProvider(this.XamlRoot, (cmd) => _remoteService?.SendData(cmd + "\n")));
                     }
                     catch (Exception ex)
                     {
@@ -238,7 +239,7 @@ namespace WinBridge.App.Views
                         IsExpanded = true,
                         HorizontalAlignment = HorizontalAlignment.Stretch,
                         HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                        Content = module.View ?? new TextBlock { Text = "No View provided" },
+                        Content = module.GetModulePage() ?? new TextBlock { Text = "No View provided" },
                         Margin = new Thickness(0,0,0,10)
                     };
 

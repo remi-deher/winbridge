@@ -5,9 +5,13 @@
     xmlns:local="using:WinBridge.App"
     xmlns:views="using:WinBridge.App.Views"
     xmlns:components="using:WinBridge.App.Components" 
+    xmlns:sdk="using:WinBridge.SDK"
     Title="WinBridge - Admin Linux">
 
     <Grid>
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Modifiers="Control,Shift" Key="P" Invoked="ToggleCommandPalette"/>
+        </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/> 
@@ -79,5 +83,30 @@
             </StackPanel>
         </Grid>
 
+        <!-- Command Palette Overlay -->
+        <Grid x:Name="CommandPaletteOverlay" Grid.RowSpan="3" Visibility="Collapsed" Background="{ThemeResource SystemControlPageBackgroundMediumAltMediumBrush}">
+            <Grid Width="600" VerticalAlignment="Top" Margin="0,80,0,0" CornerRadius="8" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" BorderThickness="1" Padding="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <TextBox x:Name="CmdPaletteSearch" PlaceholderText="Type a command..." TextChanged="CmdPaletteSearch_TextChanged" KeyDown="CmdPaletteSearch_KeyDown"/>
+                
+                <ListView x:Name="CmdPaletteList" Grid.Row="1" MaxHeight="400" Margin="0,8,0,0" ItemClick="CmdPaletteList_ItemClick" IsItemClickEnabled="True">
+                   <ListView.ItemTemplate>
+                       <DataTemplate x:DataType="sdk:ModuleAction">
+                           <StackPanel Orientation="Horizontal" Spacing="12" Padding="8">
+                               <FontIcon Glyph="{x:Bind IconGlyph}" FontFamily="Segoe MDL2 Assets"/>
+                               <StackPanel>
+                                   <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold"/>
+                                   <TextBlock Text="{x:Bind Description}" FontSize="12" Opacity="0.6"/>
+                               </StackPanel>
+                           </StackPanel>
+                       </DataTemplate>
+                   </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

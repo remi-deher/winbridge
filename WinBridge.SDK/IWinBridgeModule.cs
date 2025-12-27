@@ -8,10 +8,13 @@ namespace WinBridge.SDK
     {
         string Name { get; }
         string Version { get; }
-        UIElement? View { get; }
         
         ServerModel? CurrentServer { get; set; }
 
-        void Initialize(IServiceProvider serviceProvider);
+        void Initialize(IServiceProvider serviceProvider, IModuleUIProvider uiProvider);
+        
+        System.Collections.Generic.IEnumerable<ModuleAction> GetAvailableActions();
+        
+        UIElement GetModulePage();
     }
 }
