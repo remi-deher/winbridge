@@ -58,6 +58,8 @@ namespace WinBridge.App.Views
                 FallbackCheck.IsChecked = existing.IsFallbackEnabled;
                 WinRmPortBox.Value = existing.WinRmPort > 0 ? existing.WinRmPort : 5985;
 
+                UseAgentSwitch.IsOn = existing.UseSshAgent;
+                AgentPipeBox.Text = existing.SshAgentPipePath ?? "";
                 if (existing.SshKeyId.HasValue) KeyCombo.SelectedValue = existing.SshKeyId;
             }
             else
@@ -68,6 +70,7 @@ namespace WinBridge.App.Views
             }
 
             UpdateUiState();
+            UpdateAgentUi();
             this.PrimaryButtonClick += ServerEditDialog_PrimaryButtonClick;
         }
 
@@ -126,6 +129,20 @@ namespace WinBridge.App.Views
                     FallbackCheck.Content = "Utiliser SSH si WinRM échoue";
                 }
             }
+        }
+
+        private void UseAgentSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            UpdateAgentUi();
+        }
+
+        private void UpdateAgentUi()
+        {
+             if (UseAgentSwitch == null || AgentPipeBox == null || KeyCombo == null) return;
+        
+             bool isAgent = UseAgentSwitch.IsOn;
+             AgentPipeBox.Visibility = isAgent ? Visibility.Visible : Visibility.Collapsed;
+             KeyCombo.IsEnabled = !isAgent;
         }
 
         private async void BtnConfirmAddGroup_Click(object sender, RoutedEventArgs e)
@@ -196,7 +213,10 @@ namespace WinBridge.App.Views
                 Result.WinRmPort = (int)WinRmPortBox.Value;
             }
 
-            if (KeyCombo.SelectedValue is Guid keyId)
+            Result.UseSshAgent = UseAgentSwitch.IsOn;
+            Result.SshAgentPipePath = UseAgentSwitch.IsOn ? AgentPipeBox.Text : null;
+
+            if (!Result.UseSshAgent && KeyCombo.SelectedValue is Guid keyId)
             {
                 Result.SshKeyId = keyId;
                 Result.UsePrivateKey = true;

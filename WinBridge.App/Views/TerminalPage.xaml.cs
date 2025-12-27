@@ -30,20 +30,76 @@ namespace WinBridge.App.Views
             try
             {
                 await TermWebView.EnsureCoreWebView2Async();
-                
-                // Initialization script for xterm.js would go here
-                // For now we set a placeholder to confirm it renders
-                TermWebView.NavigateToString(@"
-                    <html>
-                        <body style='background-color:#1e1e1e; color:white; font-family: Segoe UI, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center;'>
-                            <h2>Terminal Ready</h2>
-                        </body>
-                    </html>");
+                TermWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+
+                var html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css"" />
+    <script src=""https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js""></script>
+    <script src=""https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js""></script>
+    <style>body { margin: 0; background: #1e1e1e; overflow: hidden; height: 100vh; }</style>
+</head>
+<body>
+    <div id=""terminal"" style=""height: 100%; width: 100%;""></div>
+    <script>
+        var term = new Terminal({
+            cursorBlink: true,
+            theme: {
+                background: '#1e1e1e',
+                foreground: '#ffffff'
+            },
+            fontFamily: 'Consolas, monospace',
+            fontSize: 14
+        });
+        
+        var fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
+        
+        term.open(document.getElementById('terminal'));
+        fitAddon.fit();
+        
+        window.addEventListener('resize', () => fitAddon.fit());
+
+        term.onData(e => {
+            window.chrome.webview.postMessage(e);
+        });
+
+        // Expose term for external calls
+        window.term = term;
+    </script>
+</body>
+</html>";
+                TermWebView.NavigateToString(html);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"WebView Init Error: {ex.Message}");
             }
+        }
+
+        private void CoreWebView2_WebMessageReceived(Microsoft.Web.WebView2.Core.CoreWebView2 sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs args)
+        {
+             var input = args.TryGetWebMessageAsString();
+             if (!string.IsNullOrEmpty(input) && _remoteService != null)
+             {
+                 _remoteService.SendData(input);
+             }
+        }
+
+        private void OnRemoteDataReceived(string data)
+        {
+            DispatcherQueue.TryEnqueue(async () =>
+            {
+                if (TermWebView.CoreWebView2 == null) return;
+                try
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(data);
+                    await TermWebView.ExecuteScriptAsync($"if(window.term) window.term.write({json});");
+                }
+                catch { }
+            });
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -69,8 +125,11 @@ namespace WinBridge.App.Views
                     else
                     {
                          // Emergency Fallback (should not happen)
-                         _remoteService = new SshService();
-                         ((SshService)_remoteService).Connect(server);
+                         if (App.Services != null)
+                         {
+                             _remoteService = App.Services.GetRequiredService<SshService>();
+                             await _remoteService.ConnectAsync(server);
+                         }
                     }
                     
                     LoadingRing.IsActive = false;
@@ -78,6 +137,12 @@ namespace WinBridge.App.Views
                     
                     // Show current protocol
                     System.Diagnostics.Debug.WriteLine($"Connected using: {_remoteService.Protocol}");
+
+                    // Subscribe to stream
+                    if (_remoteService != null)
+                    {
+                        _remoteService.DataReceived += OnRemoteDataReceived;
+                    }
 
                     if (_remoteService is SshService sshStarted) sshStarted.StartTerminal();
 
@@ -88,14 +153,30 @@ namespace WinBridge.App.Views
                     LoadingRing.IsActive = false;
                     LoadingRing.Visibility = Visibility.Collapsed;
 
-                    var dialog = new ContentDialog
+                    DispatcherQueue.TryEnqueue(async () =>
                     {
-                        Title = "Erreur de Connexion",
-                        Content = $"Impossible de se connecter à {_server.Host}: {ex.Message}",
-                        CloseButtonText = "Ok",
-                        XamlRoot = this.XamlRoot
-                    };
-                    await dialog.ShowAsync();
+                         var root = this.XamlRoot;
+                         if (root == null && (Application.Current as App)?.Window?.Content is FrameworkElement fe)
+                         {
+                             root = fe.XamlRoot;
+                         }
+
+                         if (root != null)
+                         {
+                            var dialog = new ContentDialog
+                            {
+                                Title = "Erreur de Connexion",
+                                Content = $"Impossible de se connecter à {_server.Host}: {ex.Message}",
+                                CloseButtonText = "Ok",
+                                XamlRoot = root
+                            };
+                            await dialog.ShowAsync();
+                         }
+                         else
+                         {
+                             System.Diagnostics.Debug.WriteLine($"Impossible d'afficher le dialogue d'erreur (XamlRoot null): {ex.Message}");
+                         }
+                    });
                 }
             }
         }
@@ -169,7 +250,7 @@ namespace WinBridge.App.Views
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
              base.OnNavigatingFrom(e);
-             (_remoteService as IDisposable)?.Dispose();
+             // Le service est géré par le RemoteSessionManager (Singleton), on ne le dispose pas ici.
         }
     }
 }

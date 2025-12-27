@@ -14,56 +14,67 @@
             <ColumnDefinition Width="400" x:Name="ColRight"/>
         </Grid.ColumnDefinitions>
 
-        <ScrollViewer Grid.Column="0" Padding="40">
-            <StackPanel Spacing="24">
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+            <ScrollViewer Grid.Row="0" Padding="40">
+                <StackPanel Spacing="24">
 
-                    <StackPanel Grid.Column="0" Spacing="8">
-                        <TextBlock x:Name="TxtServerName" Text="Chargement..." Style="{StaticResource TitleTextBlockStyle}" FontSize="32"/>
-                        <StackPanel Orientation="Horizontal" Spacing="8" Opacity="0.6">
-                            <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/>
-                            <TextBlock x:Name="TxtServerHost" Text="..." Style="{StaticResource SubtitleTextBlockStyle}"/>
-                        </StackPanel>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
-
-                        <Button x:Name="BtnShutdown" Click="BtnShutdown_Click" ToolTipService.ToolTip="Éteindre le serveur">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}"/>
-                                <TextBlock Text="Éteindre" Foreground="{ThemeResource SystemAccentColor}"/>
+                        <StackPanel Grid.Column="0" Spacing="8">
+                            <TextBlock x:Name="TxtServerName" Text="Chargement..." Style="{StaticResource TitleTextBlockStyle}" FontSize="32"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Opacity="0.6">
+                                <FontIcon Glyph="&#xE7F4;" FontFamily="Segoe MDL2 Assets"/>
+                                <TextBlock x:Name="TxtServerHost" Text="..." Style="{StaticResource SubtitleTextBlockStyle}"/>
                             </StackPanel>
-                        </Button>
-
-                        <Button x:Name="BtnReboot" Click="BtnReboot_Click" ToolTipService.ToolTip="Redémarrer le serveur">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE777;" FontFamily="Segoe MDL2 Assets" Foreground="#D13438"/>
-                                <TextBlock Text="Redémarrer" Foreground="#D13438"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
-                <Rectangle Height="1" Fill="{ThemeResource CardStrokeColorDefaultBrush}" Margin="0,10"/>
-
-                <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="24">
-                    <StackPanel Spacing="16">
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon Glyph="&#xE930;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}" FontSize="24"/>
-                            <TextBlock Text="Connexion SSH Active" Style="{StaticResource SubtitleTextBlockStyle}"/>
                         </StackPanel>
-                        <TextBlock Text="Terminal prêt. Le canal de communication est sécurisé." 
-                                   Style="{StaticResource BodyTextBlockStyle}" Opacity="0.7"/>
-                    </StackPanel>
-                </Grid>
 
-            </StackPanel>
-        </ScrollViewer>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+
+                            <Button x:Name="BtnShutdown" Click="BtnShutdown_Click" ToolTipService.ToolTip="Éteindre le serveur">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}"/>
+                                    <TextBlock Text="Éteindre" Foreground="{ThemeResource SystemAccentColor}"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnReboot" Click="BtnReboot_Click" ToolTipService.ToolTip="Redémarrer le serveur">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE777;" FontFamily="Segoe MDL2 Assets" Foreground="#D13438"/>
+                                    <TextBlock Text="Redémarrer" Foreground="#D13438"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource CardStrokeColorDefaultBrush}" Margin="0,10"/>
+
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="24">
+                        <StackPanel Spacing="16">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon Glyph="&#xE930;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemAccentColor}" FontSize="24"/>
+                                <TextBlock Text="Connexion SSH Active" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                            </StackPanel>
+                            <TextBlock Text="Terminal prêt. Le canal de communication est sécurisé." 
+                                       Style="{StaticResource BodyTextBlockStyle}" Opacity="0.7"/>
+                        </StackPanel>
+                    </Grid>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <Expander Grid.Row="1" Header="Journal d'activités" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="20,0,20,20" IsExpanded="False">
+                <components:LogsControl x:Name="MyLogsControl" Height="200"/>
+            </Expander>
+        </Grid>
 
         <Grid Grid.Column="1" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
             <Grid.RowDefinitions>
