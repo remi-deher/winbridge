@@ -33,6 +33,7 @@ public class ServerModel
     public string? Password { get; set; }
 
     public bool UseSshAgent { get; set; }
+    public string? SshAgentPipePath { get; set; }
     public bool UsePrivateKey { get; set; }
     public Guid? SshKeyId { get; set; }
     

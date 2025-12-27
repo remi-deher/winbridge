@@ -1,10 +1,25 @@
-﻿using Windows.Security.Credentials;
+﻿using System.Threading.Tasks;
+using Windows.Security.Credentials;
 
 namespace WinBridge.Core.Services;
 
 public class VaultService
 {
     private const string VaultResourceName = "WinBridge_SSH_Keys";
+    private readonly SecurePipeService? _securePipeService;
+
+    public VaultService(SecurePipeService? securePipeService = null)
+    {
+        _securePipeService = securePipeService;
+    }
+
+    public async Task<string?> GetSecretViaPipeAsync(string keyId)
+    {
+        if (_securePipeService == null) return null;
+        var (content, _) = GetKeyContent(keyId); // Passphrase handling simplified
+        if (string.IsNullOrEmpty(content)) return null;
+        return await _securePipeService.SendSecretAsync(content);
+    }
 
     // Sauvegarde le contenu de la clé privée de manière sécurisée
     public void SaveKeyContent(string keyId, string privateKeyContent, string? passphrase)
@@ -16,9 +31,6 @@ public class VaultService
         // Password = Contenu de la clé (PEM/OpenSSH)
         var cred = new PasswordCredential(VaultResourceName, keyId, privateKeyContent);
 
-        // Si on a une passphrase, on pourrait concaténer ou stocker une 2ème entrée.
-        // Pour simplifier ici, on ajoute la passphrase aux propriétés si besoin, 
-        // ou on utilise un séparateur connu.
         if (!string.IsNullOrEmpty(passphrase))
         {
             cred.Properties.Add("passphrase", passphrase);
@@ -26,6 +38,8 @@ public class VaultService
 
         vault.Add(cred);
     }
+
+    // ... (rest same)
 
     // Récupère le contenu pour la connexion
     public (string content, string? passphrase) GetKeyContent(string keyId)

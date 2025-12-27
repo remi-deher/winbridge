@@ -7,7 +7,7 @@ namespace WinBridge.SDK
     public interface ISshService
     {
         event Action<string> DataReceived;
-        void Connect(ServerModel server);
+        Task ConnectAsync(ServerModel server);
         void StartTerminal();
         void ResizeTerminal(int cols, int rows);
         void SendData(string data);

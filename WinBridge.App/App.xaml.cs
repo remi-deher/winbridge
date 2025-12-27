@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
@@ -17,6 +16,8 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using WinBridge.SDK.Broadcasting;
+using WinBridge.Core.Services;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -50,9 +51,16 @@ namespace WinBridge.App
         {
             var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
             
-            services.AddTransient<WinBridge.Core.Services.SshService>();
-            services.AddTransient<WinBridge.Core.Services.WinRmService>();
-            services.AddSingleton<WinBridge.Core.Services.RemoteServiceFactory>();
+            // Core Services
+            services.AddSingleton<IBroadcastLogger, BroadcastLogger>();
+            services.AddSingleton<RemoteSessionManager>();
+            services.AddSingleton<SecurePipeService>();
+            services.AddSingleton<SshAgentService>();
+            
+            services.AddTransient<VaultService>();
+            services.AddTransient<SshService>();
+            services.AddTransient<WinRmService>();
+            services.AddSingleton<RemoteServiceFactory>();
 
             Services = services.BuildServiceProvider();
         }

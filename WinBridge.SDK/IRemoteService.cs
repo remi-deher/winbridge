@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using WinBridge.Models.Entities;
 using WinBridge.Models.Enums;
 
 namespace WinBridge.SDK
@@ -10,6 +11,7 @@ namespace WinBridge.SDK
         
         event Action<string>? DataReceived;
         
+        Task ConnectAsync(ServerModel server);
         Task<string> ExecuteCommandAsync(string command);
         
         // Connect/Disconnect are often protocol specific, but we might want them here ideally if we want a full abstraction.
@@ -20,6 +22,9 @@ namespace WinBridge.SDK
         // "Mets à jour IWinBridgeModule pour que Initialize reçoive un IServiceProvider permettant de récupérer ce IRemoteService".
         // Usually modules don't connect, they just execute.
         
+        bool IsConnected { get; }
+        DateTime LastActivity { get; }
+        void Disconnect();
         void SendData(string data); // Useful for terminal interaction
     }
 }

@@ -106,6 +106,11 @@
         </StackPanel>
 
         <!-- 7. Keys -->
-        <ComboBox x:Name="KeyCombo" Grid.Row="6" Header="Clé SSH (Optionnel)" HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
+        <!-- 7. Auth Methods -->
+        <StackPanel Grid.Row="6" Spacing="12">
+            <ToggleSwitch x:Name="UseAgentSwitch" Header="Utiliser SSH Agent" Toggled="UseAgentSwitch_Toggled" OnContent="Activé" OffContent="Désactivé"/>
+            <TextBox x:Name="AgentPipeBox" Header="Chemin du Pipe (Optionnel)" PlaceholderText="\\.\pipe\openssh-ssh-agent" Visibility="Collapsed"/>
+            <ComboBox x:Name="KeyCombo" Header="Clé SSH (si pas d'agent)" HorizontalAlignment="Stretch" DisplayMemberPath="Name"/>
+        </StackPanel>
     </Grid>
 </ContentDialog>
