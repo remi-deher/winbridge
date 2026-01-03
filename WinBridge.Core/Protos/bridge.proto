@@ -1,0 +1,281 @@
+syntax = "proto3";
+
+option csharp_namespace = "WinBridge.Core.Grpc";
+
+package winbridge;
+
+service WinBridgeHost {
+  rpc RegisterModule (ModuleRegistration) returns (RegistrationResponse);
+  
+  rpc StreamServerMetrics (stream MetricUpdate) returns (Empty);
+
+  rpc GetServers (Empty) returns (ServerList);
+
+  rpc ControlProcess (ProcessAction) returns (ProcessActionResponse);
+
+  rpc ShowToast (ShowToastRequest) returns (ShowToastResponse);
+
+  rpc ShowDialog (ShowDialogRequest) returns (ShowDialogResponse);
+
+  rpc StorageSet (StorageSetRequest) returns (StorageSetResponse);
+
+  rpc StorageGet (StorageGetRequest) returns (StorageGetResponse);
+
+  rpc ExecuteCommand (ExecuteCommandRequest) returns (ExecuteCommandResponse);
+
+  rpc ClipboardSetText (ClipboardSetTextRequest) returns (ClipboardSetTextResponse);
+  rpc ClipboardGetText (ClipboardGetTextRequest) returns (ClipboardGetTextResponse);
+
+  rpc FileSystemPickFile (PickFileRequest) returns (PickFileResponse);
+  rpc FileSystemPickSaveFile (PickSaveFileRequest) returns (PickSaveFileResponse);
+
+  rpc VaultGetSecret (VaultGetSecretRequest) returns (VaultGetSecretResponse);
+
+  rpc TerminalSendText (TerminalSendTextRequest) returns (TerminalSendTextResponse);
+
+  rpc NavigateTo (NavigateToRequest) returns (NavigateToResponse);
+
+  rpc LogMessage (LogMessageRequest) returns (LogMessageResponse);
+
+  rpc ListenToEvents (ListenToEventsRequest) returns (stream BridgeEvent);
+}
+
+message ModuleRegistration {
+  string module_id = 1;
+
+  string api_version = 2;
+  repeated string required_permissions = 3;
+  repeated UiExtension ui_extensions = 4;
+  
+  repeated OsType supported_os = 5;
+  string tested_on_info = 6;
+}
+
+message UiExtension {
+  string id = 1;
+  string title = 2;
+  string icon_glyph = 3;
+  string entry_point = 4;
+  string base_url = 5;
+  string session_token = 6;
+  ExtensionType type = 7;
+  
+  string description = 8;
+  string command_id = 9;
+  repeated OsType os_filter = 10;
+}
+
+enum ExtensionType {
+  SERVER_TAB = 0;
+  SERVER_ACTION = 1;
+  DASHBOARD_WIDGET = 2;
+  APP_PAGE = 3;
+}
+
+enum OsType {
+  UNKNOWN_OS = 0;
+  WINDOWS = 1;
+  LINUX = 2;
+  MACOS = 3;
+}
+
+message RegistrationResponse {
+  bool is_authorized = 1;
+  string session_token = 2;
+}
+
+message MetricUpdate {
+  string server_id = 1;
+  double cpu_percent = 2;
+  double ram_percent = 3;
+}
+
+message ServerList {
+    repeated ServerModel servers = 1;
+}
+
+message ServerModel {
+    int32 id = 1;
+    string name = 2;
+    string host = 3;
+    string protocol = 4;
+    int32 port = 5;
+}
+
+message Empty {}
+
+service TerminalService {
+  rpc StreamTerminal (stream TerminalData) returns (stream TerminalData);
+}
+
+enum DataType {
+  Input = 0;
+  Output = 1;
+  Resize = 2;
+}
+
+message TerminalData {
+  string session_id = 1;
+  bytes payload = 2;
+  DataType data_type = 3;
+}
+
+message ProcessAction {
+  int32 pid = 1;
+  string action = 2;
+}
+
+message ProcessActionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ProcessUpdate {
+  int32 pid = 1;
+  string name = 2;
+  string user = 3;
+  double cpu = 4;
+  double mem = 5;
+  string status = 6;
+}
+
+message ShowToastRequest {
+  string module_id = 1;
+  string title = 2;
+  string message = 3;
+  string type = 4;
+}
+
+message ShowToastResponse {
+  bool success = 1;
+}
+
+message ShowDialogRequest {
+  string module_id = 1;
+  string title = 2;
+  string message = 3;
+  string buttons = 4;
+}
+
+message ShowDialogResponse {
+  string result = 1;
+}
+
+message StorageSetRequest {
+  string module_id = 1;
+  string key = 2;
+  string value = 3;
+}
+
+message StorageSetResponse {
+  bool success = 1;
+}
+
+message StorageGetRequest {
+  string module_id = 1;
+  string key = 2;
+}
+
+message StorageGetResponse {
+  string value = 1;
+}
+
+message ExecuteCommandRequest {
+  string module_id = 1;
+  int32 server_id = 2;
+  string command = 3;
+  int32 timeout_seconds = 4;
+}
+
+message ExecuteCommandResponse {
+  bool success = 1;
+  string stdout = 2;
+  string stderr = 3;
+  int32 exit_code = 4;
+}
+
+message ClipboardSetTextRequest {
+  string module_id = 1;
+  string text = 2;
+}
+
+message ClipboardSetTextResponse {
+  bool success = 1;
+}
+
+message ClipboardGetTextRequest {
+  string module_id = 1;
+}
+
+message ClipboardGetTextResponse {
+  string text = 1;
+}
+
+message PickFileRequest {
+  string module_id = 1;
+  repeated string allowed_extensions = 2;
+}
+
+message PickFileResponse {
+  bool success = 1;
+  string file_path = 2;
+}
+
+message PickSaveFileRequest {
+  string module_id = 1;
+  string suggested_name = 2;
+  string default_extension = 3;
+}
+
+message PickSaveFileResponse {
+  bool success = 1;
+  string file_path = 2;
+}
+
+message VaultGetSecretRequest {
+  string module_id = 1;
+  string key = 2;
+}
+
+message VaultGetSecretResponse {
+  bool success = 1;
+  string value = 2;
+}
+
+message TerminalSendTextRequest {
+  string module_id = 1;
+  string text = 2;
+  bool auto_enter = 3;
+}
+
+message TerminalSendTextResponse {
+  bool success = 1;
+}
+
+message NavigateToRequest {
+  string module_id = 1;
+  string target = 2;
+}
+
+message NavigateToResponse {
+  bool success = 1;
+}
+
+message LogMessageRequest {
+  string module_id = 1;
+  string message = 2;
+  string level = 3;
+}
+
+message LogMessageResponse {
+  bool success = 1;
+}
+
+message ListenToEventsRequest {
+  string module_id = 1;
+}
+
+message BridgeEvent {
+  string type = 1;
+  string payload = 2;
+}

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="WinBridge.App.Views.AddServerDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Ajouter un serveur"
+    PrimaryButtonText="Ajouter"
+    CloseButtonText="Annuler"
+    DefaultButton="Primary"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+
+    <ScrollViewer MaxHeight="600" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20" Padding="4">
+            
+            <!-- Section: Informations générales -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Informations générales" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                
+                <TextBox x:Name="NameBox" 
+                         Header="Nom du serveur" 
+                         PlaceholderText="Ex: Serveur Production"/>
+                
+                <AutoSuggestBox x:Name="GroupBox"
+                                Header="Groupe"
+                                PlaceholderText="Ex: Production, Test..."/>
+                
+                <TextBox x:Name="HostBox" 
+                         Header="Hôte (IP ou domaine)" 
+                         PlaceholderText="192.168.1.100 ou server.domain.com"/>
+                
+                <NumberBox x:Name="PortBox"
+                           Header="Port"
+                           Value="22"
+                           Minimum="1"
+                           Maximum="65535"
+                           SpinButtonPlacementMode="Inline"/>
+            </StackPanel>
+
+            <!-- Section: Système d'exploitation -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Système d'exploitation" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <RadioButton x:Name="OsLinux" Content="Linux" IsChecked="True" GroupName="OS" Checked="Os_Checked"/>
+                    <RadioButton x:Name="OsWindows" Content="Windows" GroupName="OS" Checked="Os_Checked"/>
+                    <RadioButton x:Name="OsOther" Content="Autre" GroupName="OS" Checked="Os_Checked"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Section: Protocole -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Protocole de connexion" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                
+                <ComboBox x:Name="ProtocolComboBox" 
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="ProtocolComboBox_SelectionChanged">
+                    <ComboBoxItem Tag="SSH" Content="SSH" IsSelected="True"/>
+                    <ComboBoxItem Tag="WinRM" Content="WinRM"/>
+                    <ComboBoxItem Tag="Telnet" Content="Telnet"/>
+                </ComboBox>
+                
+                <CheckBox x:Name="FallbackCheckBox" 
+                          Content="Activer le fallback SSH (si WinRM échoue)"
+                          Visibility="Collapsed"/>
+            </StackPanel>
+
+            <!-- Section: Authentification -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Authentification" Style="{ThemeResource SubtitleTextBlockStyle}"/>
+                
+                <StackPanel x:Name="AuthModePanel" Orientation="Horizontal" Spacing="8">
+                    <RadioButton x:Name="AuthExisting" Content="Existant" IsChecked="True" GroupName="Auth" Checked="AuthMode_Changed"/>
+                    <RadioButton x:Name="AuthManual" Content="Manuel" GroupName="Auth" Checked="AuthMode_Changed"/>
+                    <RadioButton x:Name="AuthNew" Content="Nouveau" GroupName="Auth" Checked="AuthMode_Changed"/>
+                </StackPanel>
+
+                <!-- Mode Existant -->
+                <StackPanel x:Name="ExistingCredentialPanel" Spacing="8">
+                    <ComboBox x:Name="CredentialComboBox" 
+                              Header="Sélectionner un identifiant"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE72E;" FontSize="16"/>
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding UserName}" 
+                                               VerticalAlignment="Center" 
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Style="{ThemeResource CaptionTextBlockStyle}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Mode Manuel -->
+                <StackPanel x:Name="ManualCredentialPanel" Spacing="8" Visibility="Collapsed">
+                    <TextBox x:Name="ManualUsernameBox" 
+                             Header="Nom d'utilisateur"
+                             PlaceholderText="root, administrator..."/>
+                    
+                    <PasswordBox x:Name="ManualPasswordBox" 
+                                 Header="Mot de passe"
+                                 PlaceholderText="Mot de passe de connexion"/>
+                </StackPanel>
+
+                <!-- Mode Nouveau -->
+                <StackPanel x:Name="NewCredentialPanel" Spacing="8" Visibility="Collapsed">
+                    <TextBox x:Name="NewCredentialNameBox" 
+                             Header="Nom de l'identifiant"
+                             PlaceholderText="Ex: Prod Server Admin"/>
+                    
+                    <TextBox x:Name="NewUsernameBox" 
+                             Header="Nom d'utilisateur"
+                             PlaceholderText="root, administrator..."/>
+                    
+                    <PasswordBox x:Name="NewPasswordBox" 
+                                 Header="Mot de passe"
+                                 PlaceholderText="Mot de passe de connexion"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Section: Configuration du Bastion -->
+            <Expander Header="Configuration du Bastion" 
+                      HorizontalAlignment="Stretch" 
+                      HorizontalContentAlignment="Stretch">
+                <StackPanel Spacing="16" Padding="0,12,0,0">
+                    <!-- Activation -->
+                    <ToggleSwitch x:Name="UseBastionToggle" 
+                                  Header="Utiliser un bastion" 
+                                  OffContent="Désactivé" 
+                                  OnContent="Activé"
+                                  Toggled="UseBastionToggle_Toggled"/>
+
+                    <!-- Configuration -->
+                    <StackPanel x:Name="BastionConfigPanel" Spacing="12" Visibility="Collapsed">
+                        <!-- Mode de sélection -->
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton x:Name="BastionModeExisting" Content="Serveur existant" IsChecked="True" GroupName="BastionMode" Checked="BastionMode_Changed"/>
+                            <RadioButton x:Name="BastionModeManual" Content="Manuel" GroupName="BastionMode" Checked="BastionMode_Changed"/>
+                        </StackPanel>
+
+                        <!-- Bastion Existant -->
+                        <StackPanel x:Name="BastionExistingPanel">
+                            <ComboBox x:Name="BastionServerComboBox" 
+                                      Header="Sélectionner le serveur bastion"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Choisir un serveur...">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE7F4;" FontSize="16"/>
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <TextBlock Text="{Binding Host}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{ThemeResource CaptionTextBlockStyle}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Bastion Manuel -->
+                        <StackPanel x:Name="BastionManualPanel" Spacing="12" Visibility="Collapsed">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <TextBox x:Name="BastionHostBox" 
+                                         Grid.Column="0"
+                                         Header="Hôte Bastion" 
+                                         PlaceholderText="Ex: bastion.domain.com"/>
+                                
+                                <NumberBox x:Name="BastionPortBox" 
+                                           Grid.Column="1"
+                                           Header="Port" 
+                                           Value="22" 
+                                           Minimum="1" 
+                                           Maximum="65535" 
+                                           SpinButtonPlacementMode="Inline" 
+                                           Width="120"/>
+                            </Grid>
+
+                            <ComboBox x:Name="BastionCredentialComboBox" 
+                                      Header="Identifiant pour le bastion"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Utiliser un identifiant existant">
+                                 <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE72E;" FontSize="16"/>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <!-- Message d'erreur -->
+            <InfoBar x:Name="ErrorMessage"
+                     Severity="Error"
+                     IsOpen="False"
+                     IsClosable="True"/>
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

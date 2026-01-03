@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="WinBridge.Core/WinBridge.Core.csproj" />
+  <Project Path="WinBridge.SDK/WinBridge.SDK.csproj" />
+  <Project Path="WinBridge.App/WinBridge.App.csproj">
+    <Platform Solution="Debug|*" Project="x64" />
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>

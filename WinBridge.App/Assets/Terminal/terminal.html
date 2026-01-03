@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WinBridge Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1e1e2e;
+        }
+        #terminal {
+            width: 100%;
+            height: 100%;
+        }
+        /* Personnalisation du scrollbar */
+        .xterm-viewport::-webkit-scrollbar {
+            width: 10px;
+        }
+        .xterm-viewport::-webkit-scrollbar-track {
+            background: #1e1e2e;
+        }
+        .xterm-viewport::-webkit-scrollbar-thumb {
+            background: #45475a;
+            border-radius: 5px;
+        }
+        .xterm-viewport::-webkit-scrollbar-thumb:hover {
+            background: #585b70;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+    <script>
+        // Configuration du terminal avec thème Catppuccin Mocha
+        const term = new Terminal({
+            cursorBlink: true,
+            cursorStyle: 'bar',
+            fontSize: 14,
+            fontFamily: '"Cascadia Code", "Consolas", "Courier New", monospace',
+            lineHeight: 1.2,
+            scrollback: 10000,
+            theme: {
+                foreground: '#cdd6f4',
+                background: '#1e1e2e',
+                cursor: '#f5e0dc',
+                cursorAccent: '#1e1e2e',
+                selectionBackground: '#585b70',
+                selectionForeground: '#cdd6f4',
+                black: '#45475a',
+                red: '#f38ba8',
+                green: '#a6e3a1',
+                yellow: '#f9e2af',
+                blue: '#89b4fa',
+                magenta: '#f5c2e7',
+                cyan: '#94e2d5',
+                white: '#bac2de',
+                brightBlack: '#585b70',
+                brightRed: '#f38ba8',
+                brightGreen: '#a6e3a1',
+                brightYellow: '#f9e2af',
+                brightBlue: '#89b4fa',
+                brightMagenta: '#f5c2e7',
+                brightCyan: '#94e2d5',
+                brightWhite: '#a6adc8'
+            }
+        });
+
+        // Addons
+        const fitAddon = new FitAddon.FitAddon();
+        const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+        
+        term.loadAddon(fitAddon);
+        term.loadAddon(webLinksAddon);
+
+        // Ouvrir le terminal
+        term.open(document.getElementById('terminal'));
+        fitAddon.fit();
+
+        // Ajuster la taille quand la fenêtre change
+        window.addEventListener('resize', () => {
+            fitAddon.fit();
+            // Notifier C# du changement de taille
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    type: 'resize',
+                    cols: term.cols,
+                    rows: term.rows
+                });
+            }
+        });
+
+        // Envoyer les entrées utilisateur vers C#
+        term.onData((data) => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    type: 'input',
+                    data: data
+                });
+            }
+        });
+
+        // Fonction appelée par C# pour écrire dans le terminal
+        function writeToTerminal(data) {
+            term.write(data);
+        }
+
+        // Fonction appelée par C# pour effacer le terminal
+        function clearTerminal() {
+            term.clear();
+        }
+
+        // Fonction appelée par C# pour obtenir la taille du terminal
+        function getTerminalSize() {
+            return JSON.stringify({ cols: term.cols, rows: term.rows });
+        }
+
+        // Fonction appelée par C# pour redimensionner
+        function fitTerminal() {
+            fitAddon.fit();
+            return JSON.stringify({ cols: term.cols, rows: term.rows });
+        }
+
+        // Focus initial
+        term.focus();
+
+        // Message de bienvenue (sera remplacé par la sortie SSH)
+        term.writeln('\x1b[38;5;141m╔══════════════════════════════════════════════════════════════╗\x1b[0m');
+        term.writeln('\x1b[38;5;141m║\x1b[0m  \x1b[1m\x1b[38;5;75mWinBridge Terminal\x1b[0m                                           \x1b[38;5;141m║\x1b[0m');
+        term.writeln('\x1b[38;5;141m║\x1b[0m  \x1b[38;5;244mConnexion en cours...\x1b[0m                                        \x1b[38;5;141m║\x1b[0m');
+        term.writeln('\x1b[38;5;141m╚══════════════════════════════════════════════════════════════╝\x1b[0m');
+        term.writeln('');
+
+        // Notifier que le terminal est prêt
+        setTimeout(() => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    type: 'ready',
+                    cols: term.cols,
+                    rows: term.rows
+                });
+            }
+        }, 100);
+    </script>
+</body>
+</html>

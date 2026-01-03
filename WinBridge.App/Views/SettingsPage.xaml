@@ -1,0 +1,53 @@
+<Page
+    x:Class="WinBridge.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Padding="24" Spacing="24">
+        <TextBlock Text="Paramètres" Style="{StaticResource TitleTextBlockStyle}"/>
+        
+        <StackPanel Spacing="8">
+            <ToggleSwitch x:Name="DeveloperModeToggle"
+                          Header="Mode Développeur" 
+                          OffContent="Désactivé" 
+                          OnContent="Activé" 
+                          IsOn="False"
+                          Toggled="DeveloperSwitch_Toggled"/>
+            <TextBlock Text="Active les fonctionnalités avancées pour le développement de modules." 
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <StackPanel Spacing="12">
+            <TextBlock Text="Module Repositories" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                
+            <ListView x:Name="RepositoriesList" SelectionMode="None" BorderThickness="1" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" CornerRadius="4">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"/>
+                            <Button Grid.Column="1" Content="Delete" Click="DeleteRepo_Click" Tag="{Binding}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBox x:Name="RepoUrlBox" PlaceholderText="https://example.com/marketplace.json" MinWidth="300" HorizontalAlignment="Left"/>
+                <Button Content="Add Repository" Click="AddRepo_Click" Style="{StaticResource AccentButtonStyle}"/>
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</Page>

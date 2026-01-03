@@ -1,0 +1,123 @@
+<Page
+    x:Class="WinBridge.App.Views.SftpPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:WinBridge.App.Models"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <MenuFlyout x:Key="LocalContextMenu">
+            <MenuFlyoutItem Text="Envoyer vers Distant" Icon="Upload" Click="OnUploadClick"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="Copier" Icon="Copy" Click="OnLocalCopyClick"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="Actualiser" Icon="Refresh" Click="OnRefreshClick"/>
+        </MenuFlyout>
+
+        <MenuFlyout x:Key="RemoteContextMenu">
+            <MenuFlyoutItem Text="Télécharger" Icon="Download" Click="OnDownloadClick"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="Copier" Icon="Copy" Click="OnRemoteCopyClick"/>
+            <MenuFlyoutItem Text="Coller" Icon="Paste" Click="OnRemotePasteClick"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="Nouveau dossier" Icon="NewFolder" Click="OnNewRemoteFolderClick"/>
+            <MenuFlyoutItem Text="Renommer" Icon="Rename" Click="OnRenameRemoteClick"/>
+            <MenuFlyoutItem Text="Supprimer" Icon="Delete" Click="OnDeleteRemoteClick"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="Actualiser" Icon="Refresh" Click="OnRefreshClick"/>
+        </MenuFlyout>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Toolbar -->
+            <RowDefinition Height="Auto"/> <!-- Breadcrumbs/Paths -->
+            <RowDefinition Height="*"/>    <!-- File Lists -->
+            <RowDefinition Height="Auto"/> <!-- Transfer Status -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Toolbar -->
+        <CommandBar DefaultLabelPosition="Right" Grid.Row="0" IsSticky="True" IsOpen="False">
+            <CommandBar.Content>
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,6">
+                    <ComboBox x:Name="ServerCombo" Width="250" PlaceholderText="Sélectionner un serveur..." 
+                              DisplayMemberPath="Name" SelectionChanged="OnServerSelectionChanged"/>
+                    <Button x:Name="ConnectButton" Content="Connecter" Click="OnConnectClick" Style="{StaticResource AccentButtonStyle}"/>
+                    <Button x:Name="DisconnectButton" Content="Déconnecter" Click="OnDisconnectClick" Visibility="Collapsed"/>
+                </StackPanel>
+            </CommandBar.Content>
+            <AppBarButton Icon="Refresh" Label="Actualiser" Click="OnRefreshClick"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="Upload" Label="Envoyer vers Distant" Click="OnUploadClick"/>
+            <AppBarButton Icon="Download" Label="Recevoir vers Local" Click="OnDownloadClick"/>
+        </CommandBar>
+
+        <!-- 2. Paths (Local | Remote) -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,12,*" Padding="0,0,0,12">
+            <!-- Left: Local -->
+            <Grid Grid.Column="0" ColumnDefinitions="Auto,*,Auto" Margin="12,0,0,0">
+                <Button Content="↑" Click="OnLocalUpClick" ToolTipService.ToolTip="Dossier parent"/>
+                <TextBox x:Name="LocalPathBox" Grid.Column="1" Margin="8,0" KeyDown="OnLocalPathKeyDown" PlaceholderText="Chemin local"/>
+                <Button Content="Go" Grid.Column="2" Click="OnLocalGoClick"/>
+            </Grid>
+            
+            <!-- Right: Remote -->
+            <Grid Grid.Column="2" ColumnDefinitions="Auto,*,Auto" Margin="0,0,12,0">
+                <Button Content="↑" Click="OnRemoteUpClick" ToolTipService.ToolTip="Dossier parent"/>
+                <TextBox x:Name="RemotePathBox" Grid.Column="1" Margin="8,0" KeyDown="OnRemotePathKeyDown" PlaceholderText="Chemin distant (ex: /home/user)"/>
+                <Button Content="Go" Grid.Column="2" Click="OnRemoteGoClick"/>
+            </Grid>
+        </Grid>
+
+        <!-- 3. File Lists -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,12,*">
+             <!-- Left: Local Files -->
+             <ListView x:Name="LocalListView" Grid.Column="0" SelectionMode="Extended" DoubleTapped="OnLocalDoubleTapped" Margin="12,0,0,12"
+                       BorderThickness="1" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" CornerRadius="4"
+                       CanDragItems="True" AllowDrop="True"
+                       DragItemsStarting="OnLocalDragItemsStarting" DragOver="OnLocalDragOver" Drop="OnLocalDrop"
+                       ContextFlyout="{StaticResource LocalContextMenu}"
+                       KeyDown="OnLocalListKeyDown">
+                 <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:FileItem">
+                        <Grid ColumnDefinitions="30,*,80">
+                            <FontIcon Glyph="{x:Bind IconGlyph}" FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16"/>
+                            <TextBlock Text="{x:Bind Name}" Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,0,0"/>
+                            <TextBlock Text="{x:Bind SizeDisplay}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right" FontSize="12"/>
+                        </Grid>
+                    </DataTemplate>
+                 </ListView.ItemTemplate>
+             </ListView>
+
+             <!-- Right: Remote Files -->
+             <ListView x:Name="RemoteListView" Grid.Column="2" SelectionMode="Extended" DoubleTapped="OnRemoteDoubleTapped" Margin="0,0,12,12"
+                       BorderThickness="1" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}" CornerRadius="4"
+                       CanDragItems="True" AllowDrop="True"
+                       DragItemsStarting="OnRemoteDragItemsStarting" DragOver="OnRemoteDragOver" Drop="OnRemoteDrop"
+                       ContextFlyout="{StaticResource RemoteContextMenu}"
+                       KeyDown="OnRemoteListKeyDown">
+                 <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:FileItem">
+                         <Grid ColumnDefinitions="30,*,80">
+                            <FontIcon Glyph="{x:Bind IconGlyph}" FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Foreground="{ThemeResource SystemAccentColor}"/>
+                            <TextBlock Text="{x:Bind Name}" Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,0,0"/>
+                            <TextBlock Text="{x:Bind SizeDisplay}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right" FontSize="12"/>
+                        </Grid>
+                    </DataTemplate>
+                 </ListView.ItemTemplate>
+             </ListView>
+        </Grid>
+        
+        <!-- 4. Status Bar & Overlay -->
+        <Grid Grid.Row="3" Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="12,4" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}">
+             <StackPanel Orientation="Horizontal" Spacing="8">
+                 <ProgressRing x:Name="TransferRing" IsActive="False" Width="16" Height="16"/>
+                 <TextBlock x:Name="StatusText" Text="Prêt" VerticalAlignment="Center" FontSize="12"/>
+             </StackPanel>
+        </Grid>
+
+        <ProgressRing x:Name="GlobalLoading" Grid.RowSpan="4" IsActive="False" Width="64" Height="64" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</Page>

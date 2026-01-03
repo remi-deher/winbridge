@@ -1,0 +1,32 @@
+﻿# --- Build Output ---
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+Generated\ Files/
+/TestResults
+
+# --- User Specific & IDE ---
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.swp
+*.bak
+
+# --- Publishing & Packages ---
+*.nupkg
+*.snupkg
+*.appx
+*.msix
+*.msixbundle
+*.appxbundle
+
+# --- System Files ---
+Thumbs.db
+.DS_Store
+
+# --- Logs ---
+*.log

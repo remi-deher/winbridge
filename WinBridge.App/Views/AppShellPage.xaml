@@ -1,0 +1,70 @@
+<Page
+    x:Class="WinBridge.App.Views.AppShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="AppShellPage_Loaded"
+    mc:Ignorable="d">
+
+    <NavigationView x:Name="NavView" 
+                    PaneDisplayMode="Auto" 
+                    SelectionChanged="NavView_SelectionChanged"
+                    IsSettingsVisible="True">
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="Tableau de bord" Tag="DashboardPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE80F;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Serveurs" Tag="ServerListPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7F4;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+
+            <NavigationViewItem Content="Identifiants" Tag="CredentialsPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE72E;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Modules" Tag="ModulesPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8F1;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Roadmap" Tag="RoadmapPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE826;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem x:Name="DeveloperNavItem" Content="Espace développeur" Tag="DeveloperPage" Visibility="Collapsed">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE943;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem Content="À propos" Tag="AboutPage">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE946;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.FooterMenuItems>
+
+        <Grid>
+            <!-- Navigation Système (Dashboard, Liste, etc.) -->
+            <Frame x:Name="SystemFrame"/>
+
+            <!-- Onglets Terminaux (Superposés quand actifs) -->
+            <TabView x:Name="MainTabView"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     IsAddTabButtonVisible="False"
+                     Visibility="Collapsed"
+                     TabCloseRequested="MainTabView_TabCloseRequested">
+            </TabView>
+        </Grid>
+    </NavigationView>
+</Page>
